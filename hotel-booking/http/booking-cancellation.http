@@ -1,0 +1,63 @@
+@baseUrl = http://localhost:8080/api/v1
+@guestIdentifier = replace-with-guest-email
+@guestPassword = replace-with-guest-password
+@managerIdentifier = replace-with-manager-email
+@managerPassword = replace-with-manager-password
+@bookingCode = BK20260810000001
+
+### 1. Đăng nhập guest
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "{{guestIdentifier}}",
+  "password": "{{guestPassword}}"
+}
+
+> {% client.global.set("guestAccessToken", response.body.data.accessToken); %}
+
+### 2. Kiểm tra khả năng hủy và số tiền dự kiến hoàn
+GET {{baseUrl}}/bookings/{{bookingCode}}/cancellation
+Authorization: Bearer {{guestAccessToken}}
+
+### 3. Hủy đặt phòng
+POST {{baseUrl}}/bookings/{{bookingCode}}/cancel
+Authorization: Bearer {{guestAccessToken}}
+Content-Type: application/json
+
+{
+  "reason": "Thay đổi kế hoạch"
+}
+
+### 4. Đăng nhập manager
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "{{managerIdentifier}}",
+  "password": "{{managerPassword}}"
+}
+
+> {% client.global.set("managerAccessToken", response.body.data.accessToken); %}
+
+### 5. Manager lấy danh sách yêu cầu hoàn tiền đang chờ
+GET {{baseUrl}}/payment-monitoring/refunds?page=0&size=10
+Authorization: Bearer {{managerAccessToken}}
+
+> {%
+    if (response.body.data.content.length > 0) {
+        client.global.set("refundId", response.body.data.content[0].id);
+    }
+%}
+
+### 6. Manager xác nhận đã chuyển khoản hoàn tiền
+POST {{baseUrl}}/payment-monitoring/refunds/{{refundId}}/confirm
+Authorization: Bearer {{managerAccessToken}}
+Content-Type: application/json
+
+{
+  "bankReference": "BANK-REFUND-20260812-001"
+}
+
+### 7. Không được truy cập khi chưa đăng nhập
+GET {{baseUrl}}/bookings/{{bookingCode}}/cancellation

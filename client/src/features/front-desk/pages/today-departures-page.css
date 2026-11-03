@@ -1,0 +1,129 @@
+.today-departures-page {
+  min-width: 0;
+}
+
+.today-departures-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.today-departures-page__header .ant-typography {
+  margin-bottom: 4px;
+}
+
+.today-departures-page__eyebrow {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.today-departures-page__summary {
+  margin-bottom: 20px;
+}
+
+.today-departures-page__summary .ant-card,
+.today-departures-page__table-card {
+  border-color: #cbd5e1;
+  background: #ffffff;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.07);
+}
+
+.today-departures-page__summary .ant-card {
+  height: 100%;
+}
+
+.today-departures-page__summary .ant-statistic-title {
+  font-size: 15px;
+}
+
+.today-departures-page__summary .ant-statistic-content {
+  font-size: clamp(25px, 2vw, 30px);
+  line-height: 1.2;
+}
+
+.today-departures-page__alert {
+  margin-bottom: 16px;
+}
+
+.today-departures-page__table-card .ant-card-head {
+  border-bottom-color: #dbe3ec;
+}
+
+.today-departures-page__table-card .ant-table-thead > tr > th {
+  border-bottom-color: #cbd5e1;
+  background: #eaf0f6;
+  color: #172033;
+  font-size: 13px;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.today-departures-page__table-card .ant-table-tbody > tr > td {
+  border-bottom-color: #e2e8f0;
+  font-size: 14px;
+  line-height: 1.4;
+  vertical-align: middle;
+}
+
+.today-departures-page__table-card .ant-table-tbody > tr:hover > td {
+  background: #f8fbff;
+}
+
+.today-departures-page__cell-stack {
+  width: 100%;
+}
+
+.today-departures-page__cell-stack .ant-typography {
+  overflow-wrap: anywhere;
+}
+
+.today-departures-page__guest-count {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.today-departures-page__guest-count-children {
+  padding-left: 21px;
+  color: #64748b;
+}
+
+.today-departures-page__money-cell {
+  white-space: nowrap;
+}
+
+.today-departures-page__action-note {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.today-departures-page__checkout-modal {
+  width: 100%;
+}
+
+.today-departures-page__checkout-money {
+  display: grid;
+  gap: 6px;
+}
+
+.today-departures-page__number-input {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .today-departures-page__header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .today-departures-page__header > .ant-btn {
+    align-self: flex-start;
+  }
+}

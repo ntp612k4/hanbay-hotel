@@ -1,0 +1,51 @@
+@startuml
+!include ../common/style.puml
+
+title HANBAY HOTEL - Guest Check-in
+
+autonumber
+
+actor Receptionist
+boundary "Front Desk Application" as FrontDesk
+control "Front Desk API" as API
+control "Check-in Service" as CheckInService
+database "Hotel Database" as DB
+
+Receptionist -> FrontDesk: Select confirmed booking\nand physical room
+FrontDesk -> API: Check in guest
+API -> CheckInService: checkIn(bookingId, roomId)
+
+activate CheckInService
+
+group Transaction
+    CheckInService -> DB: Lock booking and room
+    DB --> CheckInService: Locked records
+
+    CheckInService -> CheckInService: Validate booking status
+    CheckInService -> CheckInService: Validate room availability\nand room type
+
+    alt Invalid booking state
+        CheckInService --> API: Invalid booking state
+    else Room unavailable or mismatched
+        CheckInService --> API: Invalid room assignment
+    else Check-in valid
+        CheckInService -> DB: Assign physical room
+        CheckInService -> DB: Update booking to CHECKED_IN
+        CheckInService -> DB: Update room to OCCUPIED
+        DB --> CheckInService: Changes committed
+
+        CheckInService --> API: Check-in successful
+    end
+end
+
+deactivate CheckInService
+
+alt Successful
+    API --> FrontDesk: 200 OK
+    FrontDesk --> Receptionist: Show assigned room
+else Failed
+    API --> FrontDesk: 409 Conflict
+    FrontDesk --> Receptionist: Show failure reason
+end
+
+@enduml

@@ -1,0 +1,110 @@
+.check-in-page {
+  width: min(1180px, 100%);
+  margin-inline: auto;
+}
+
+.check-in-page__header {
+  margin-bottom: 24px;
+}
+
+.check-in-page__header .ant-typography {
+  margin-block: 0 6px;
+}
+
+.check-in-page__eyebrow {
+  color: #1677ff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.check-in-page__card,
+.check-in-page__result {
+  border: 0;
+  box-shadow: 0 8px 30px rgba(30, 58, 95, 0.08);
+}
+
+.check-in-page__error {
+  margin-bottom: 20px;
+}
+
+.check-in-page__load-rooms {
+  margin-top: -12px;
+  margin-bottom: 20px;
+}
+
+.check-in-page__room-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.check-in-page__room-options .ant-radio-button-wrapper {
+  height: auto;
+  padding: 10px 14px;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.check-in-page__room-options .ant-radio-button-wrapper::before {
+  display: none;
+}
+
+.check-in-page__room-options .ant-radio-button-wrapper:hover {
+  border-color: #1677ff;
+  color: #1677ff;
+}
+
+.check-in-page__room-options
+  .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
+  border-color: #1677ff;
+  background: #e6f4ff;
+  color: #0958d9;
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.14);
+  font-weight: 600;
+}
+
+.check-in-page__room-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.check-in-page__room-selected-icon {
+  display: none;
+  color: #1677ff;
+}
+
+.ant-radio-button-wrapper-checked .check-in-page__room-selected-icon {
+  display: inline-flex;
+}
+
+.check-in-page__result {
+  overflow: hidden;
+  border-top: 4px solid #52c41a;
+}
+
+.check-in-page__result-content,
+.check-in-page__details {
+  width: 100%;
+}
+
+.check-in-page__success-icon {
+  color: #52c41a;
+  font-size: 48px;
+}
+
+.check-in-page__result-heading .ant-typography {
+  margin: 0;
+}
+
+@media (max-width: 575px) {
+  .check-in-page__header {
+    margin-bottom: 16px;
+  }
+}

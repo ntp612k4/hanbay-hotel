@@ -1,0 +1,35 @@
+@startuml
+!include ../common/style.puml
+
+title HANBAY HOTEL - Housekeeping Activity Diagram
+
+|Housekeeping Staff|
+start
+:Login and view DIRTY/CLEANING rooms;
+
+|System|
+:Return operational room list;
+
+|Housekeeping Staff|
+:Select DIRTY room;
+:Start cleaning;
+
+|System|
+:Lock room;
+:Validate status = DIRTY;
+:Update room status to CLEANING;
+
+|Housekeeping Staff|
+:Inspect and clean room;
+:Finish cleaning and inspection;
+:Submit completion;
+
+|System|
+:Lock room;
+:Validate status = CLEANING;
+:Update room status to AVAILABLE;
+
+|Housekeeping Staff|
+:View completion confirmation;
+stop
+@enduml

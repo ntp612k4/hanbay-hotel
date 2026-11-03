@@ -1,0 +1,128 @@
+@baseUrl = http://localhost:8080/api/v1
+@managerIdentifier = replace-with-manager-email-or-phone
+@managerPassword = replace-with-manager-password
+@nonManagerIdentifier = replace-with-non-manager-email-or-phone
+@nonManagerPassword = replace-with-non-manager-password
+@availableRoomId = replace-with-available-physical-room-uuid
+@missingRoomId = 00000000-0000-0000-0000-000000000099
+
+### 1. Đăng nhập Manager và capture access token
+# @name managerLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "identifier": "{{managerIdentifier}}",
+  "password": "{{managerPassword}}"
+}
+
+> {%
+    client.global.set("managerAccessToken", response.body.data.accessToken);
+%}
+
+### 2. Đăng nhập tài khoản không phải Manager và capture access token
+# @name nonManagerLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "identifier": "{{nonManagerIdentifier}}",
+  "password": "{{nonManagerPassword}}"
+}
+
+> {%
+    client.global.set("nonManagerAccessToken", response.body.data.accessToken);
+%}
+
+### 3. Manager lấy physical rooms - kỳ vọng 200 PageResponse
+# Chọn `roomId` từ response. Endpoint trả current status; POST maintenance mới là nơi xác thực phòng có hợp lệ hay không.
+# @name listPhysicalRooms
+GET {{baseUrl}}/rooms?page=0&size=20
+Authorization: Bearer {{managerAccessToken}}
+Accept: application/json
+
+> {%
+    const availableRoom = response.body.data.content.find((room) => room.status === "AVAILABLE");
+    if (availableRoom) client.global.set("availableRoomId", availableRoom.roomId);
+%}
+
+### 4. Manager tạo yêu cầu bảo trì - kỳ vọng 201, Room chuyển MAINTENANCE
+# `availableRoomId` được chọn từ request trước; cũng có thể thay thủ công bằng UUID physical room AVAILABLE.
+# @name createMaintenanceRequest
+POST {{baseUrl}}/maintenance-requests
+Authorization: Bearer {{managerAccessToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "roomId": "{{availableRoomId}}",
+  "title": "Kiểm tra điều hòa",
+  "description": "Điều hòa không làm lạnh và phát ra tiếng ồn lớn."
+}
+
+> {%
+    client.global.set("maintenanceRequestId", response.body.data.id);
+%}
+
+### 5. Manager xem danh sách - kỳ vọng 200 PageResponse
+GET {{baseUrl}}/maintenance-requests?page=0&size=20
+Authorization: Bearer {{managerAccessToken}}
+Accept: application/json
+
+### 6. Manager xem chi tiết yêu cầu vừa tạo - kỳ vọng 200 PENDING
+GET {{baseUrl}}/maintenance-requests/{{maintenanceRequestId}}
+Authorization: Bearer {{managerAccessToken}}
+Accept: application/json
+
+### 7. PENDING -> IN_PROGRESS - kỳ vọng 200, startedAt được ghi
+PATCH {{baseUrl}}/maintenance-requests/{{maintenanceRequestId}}/status
+Authorization: Bearer {{managerAccessToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "status": "IN_PROGRESS"
+}
+
+### 8. IN_PROGRESS -> COMPLETED - kỳ vọng 200, completedAt được ghi và Room về AVAILABLE
+PATCH {{baseUrl}}/maintenance-requests/{{maintenanceRequestId}}/status
+Authorization: Bearer {{managerAccessToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "status": "COMPLETED"
+}
+
+### 9. Transition ngược COMPLETED -> IN_PROGRESS - kỳ vọng 409 MAINTENANCE_REQUEST_STATUS_CONFLICT
+PATCH {{baseUrl}}/maintenance-requests/{{maintenanceRequestId}}/status
+Authorization: Bearer {{managerAccessToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "status": "IN_PROGRESS"
+}
+
+### 10. Tạo yêu cầu với Room không tồn tại - kỳ vọng 404 ROOM_NOT_FOUND
+POST {{baseUrl}}/maintenance-requests
+Authorization: Bearer {{managerAccessToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "roomId": "{{missingRoomId}}",
+  "title": "Kiểm tra phòng không tồn tại",
+  "description": "Tình huống kiểm thử lỗi room not found."
+}
+
+### 11. Không gửi access token - kỳ vọng 401 AUTH_UNAUTHORIZED
+GET {{baseUrl}}/maintenance-requests?page=0&size=20
+Accept: application/json
+
+### 12. Tài khoản không phải Manager - kỳ vọng 403 AUTH_FORBIDDEN
+GET {{baseUrl}}/maintenance-requests?page=0&size=20
+Authorization: Bearer {{nonManagerAccessToken}}
+Accept: application/json

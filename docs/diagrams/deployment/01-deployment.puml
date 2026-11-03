@@ -1,0 +1,160 @@
+@startuml
+!include ../common/style.puml
+
+title HANBAY HOTEL - Current Deployment Architecture
+
+top to bottom direction
+
+actor "User" as User
+
+node "Developer Machine" as DeveloperMachine {
+
+    node "Web Browser" as Browser {
+        artifact "HANBAY HOTEL UI\nReact 19 + TypeScript" as WebUI
+    }
+
+    node "Node.js Runtime" as NodeRuntime {
+        component "Vite Development Server" as ViteServer
+        artifact "client/" as FrontendSource
+    }
+
+    node "Java 17 Runtime" as JavaRuntime {
+        component "Spring Boot Application\nhotel-management" as BackendApp
+        artifact "hotel-booking-0.0.1-SNAPSHOT.jar" as BackendJar
+
+        component "Actuator" as Actuator
+        component "Spring Data JPA" as Jpa
+        component "Flyway" as Flyway
+        component "Spring Security" as Security
+    }
+
+    node "Docker Engine" as DockerEngine {
+        component "Docker Compose" as DockerCompose
+
+        database "PostgreSQL Container\npostgres:latest" as LocalPostgres {
+            artifact "Hotel Management Database" as LocalDatabase
+        }
+    }
+}
+
+cloud "GitHub" as GitHub {
+
+    artifact "Source Repository" as Repository
+
+    node "GitHub Actions" as GitHubActions {
+
+        node "Frontend CI\nUbuntu + Node.js 22" as FrontendCI {
+            component "npm ci" as NpmInstall
+            component "Prettier Check" as PrettierCheck
+            component "ESLint" as EslintCheck
+            component "Vitest" as FrontendTest
+            component "TypeScript + Vite Build" as FrontendBuild
+        }
+
+        node "Backend CI\nUbuntu + Java 17" as BackendCI {
+            component "Maven Verify" as MavenVerify
+
+            database "PostgreSQL 17\nTest Service" as TestPostgres {
+                artifact "hotel_test_db" as TestDatabase
+            }
+        }
+    }
+}
+
+' ===== Local runtime connections =====
+
+User --> Browser : Access web application
+
+FrontendSource --> ViteServer : Loaded and bundled
+ViteServer --> WebUI : Serves frontend assets
+Browser --> ViteServer : HTTP\nVite development port
+
+WebUI --> BackendApp : REST API over HTTP\nBase URL from VITE_API_BASE_URL
+
+BackendJar --> BackendApp : Executed by Java 17
+
+BackendApp --> Security : Authenticate and authorize requests
+BackendApp --> Actuator : Expose health and info endpoints
+BackendApp --> Jpa : Persist and query domain data
+BackendApp --> Flyway : Run database migrations on startup
+
+Jpa --> LocalPostgres : JDBC
+Flyway --> LocalPostgres : Schema migration
+
+DockerCompose --> LocalPostgres : Create and manage container
+BackendApp --> DockerCompose : Spring Boot Docker Compose support
+
+' ===== CI connections =====
+
+Repository --> GitHubActions : Push or pull request
+
+FrontendCI --> NpmInstall
+NpmInstall --> PrettierCheck
+PrettierCheck --> EslintCheck
+EslintCheck --> FrontendTest
+FrontendTest --> FrontendBuild
+
+BackendCI --> MavenVerify
+MavenVerify --> TestPostgres : JDBC\nlocalhost:5432
+MavenVerify --> MavenVerify : Compile, format check\nand automated tests
+
+note right of WebUI
+Runtime configuration:
+
+VITE_API_BASE_URL is required.
+VITE_APP_NAME is optional.
+end note
+
+note right of BackendApp
+Default application configuration:
+
+Application: hotel-management
+Profile: local
+Server port: 8080
+Health: /actuator/health
+Info: /actuator/info
+end note
+
+note right of LocalPostgres
+compose.yaml currently defines:
+
+POSTGRES_DB=mydatabase
+POSTGRES_USER=myuser
+POSTGRES_PASSWORD=secret
+
+The host port is dynamically assigned
+because compose.yaml specifies "5432"
+without a fixed host port.
+end note
+
+note bottom of LocalPostgres
+When Spring Boot Docker Compose support starts PostgreSQL,
+it discovers the container connection automatically.
+
+When PostgreSQL is started manually, the local profile uses:
+
+DB_URL=jdbc:postgresql://localhost:5432/hotel_management
+DB_USERNAME=hotel
+DB_PASSWORD=hotel
+end note
+
+note bottom of GitHubActions
+Frontend CI runs when files under client/ change.
+
+Backend CI runs when files under hotel-booking/ change.
+
+The current workflows verify the source code.
+They do not deploy the application to production.
+end note
+
+legend left
+|= Element |= Current responsibility |
+| Browser | Runs the React frontend |
+| Vite | Serves frontend during local development |
+| Spring Boot | Hosts REST API and application logic |
+| PostgreSQL | Stores persistent business data |
+| Docker Compose | Provides local PostgreSQL |
+| GitHub Actions | Runs frontend and backend verification |
+endlegend
+
+@enduml

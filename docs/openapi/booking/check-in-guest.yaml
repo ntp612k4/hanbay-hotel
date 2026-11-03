@@ -1,0 +1,324 @@
+openapi: 3.0.3
+
+info:
+  title: API check-in khách HANBAY Hotel
+  version: 1.0.0
+  description: >
+    Contract cho thao tác lễ tân gán một phòng vật lý còn trống cho booking đã xác nhận
+    và check-in khách trong cùng một transaction.
+
+servers:
+  - url: http://localhost:8080
+    description: Môi trường phát triển cục bộ
+
+tags:
+  - name: Front Desk
+    description: Nghiệp vụ tại quầy lễ tân
+
+paths:
+  /api/v1/bookings/{bookingCode}/available-rooms:
+    get:
+      tags: [Front Desk]
+      summary: Lấy phòng vật lý khả dụng cho booking
+      operationId: getAvailablePhysicalRooms
+      description: |
+        Trả về các phòng có trạng thái `AVAILABLE` thuộc đúng hạng phòng của booking.
+        Booking phải ở trạng thái `CONFIRMED` và ngày hiện tại phải là ngày check-in.
+
+        Kết quả chỉ là snapshot để lễ tân lựa chọn và không giữ phòng. API check-in
+        luôn khóa và kiểm tra lại room nhằm xử lý trường hợp nhiều lễ tân cùng chọn.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/BookingCode"
+      responses:
+        "200":
+          description: Lấy danh sách phòng khả dụng thành công.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailablePhysicalRoomsApiResponse"
+              example:
+                success: true
+                message: Lấy danh sách phòng khả dụng thành công
+                data:
+                  - roomId: 68ba3ad7-ce1a-43ac-b78e-b1bb87c73d2f
+                    roomNumber: "0501"
+                    floor: 5
+                timestamp: "2026-08-19T07:04:00Z"
+        "401":
+          description: Thiếu hoặc access token không hợp lệ (`AUTH_UNAUTHORIZED`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "403":
+          description: Người gọi không có vai trò RECEPTIONIST (`AUTH_FORBIDDEN`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "404":
+          description: Không tìm thấy booking (`BOOKING_NOT_FOUND`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "409":
+          description: Booking không thể check-in tại thời điểm hiện tại.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+
+  /api/v1/bookings/{bookingCode}/check-in:
+    post:
+      tags: [Front Desk]
+      summary: Gán phòng vật lý và check-in khách
+      operationId: checkInGuest
+      description: |
+        Chỉ người dùng có vai trò `RECEPTIONIST` được gọi API này.
+
+        Booking và room được khóa, kiểm tra và cập nhật trong cùng một transaction:
+
+        - Booking phải tồn tại và đang ở trạng thái `CONFIRMED`.
+        - Ngày hiện tại theo múi giờ `Asia/Ho_Chi_Minh` phải bằng ngày check-in của booking.
+        - Room phải thuộc đúng hạng phòng đã đặt và có trạng thái `AVAILABLE`.
+        - Nếu booking đã được gán một room khác trước lúc check-in, lễ tân được phép
+          đổi sang room trong request. Assignment cũ chỉ bị thay sau khi room mới
+          được khóa và vượt qua toàn bộ validation.
+        - Khi thành công, room được gán vào booking, booking chuyển sang `CHECKED_IN`,
+          room chuyển sang `OCCUPIED` và lịch sử trạng thái booking được ghi nhận.
+        - Nếu hai lễ tân chọn cùng một room, chỉ request khóa/cập nhật room thành công
+          đầu tiên được chấp nhận; request còn lại nhận `409 ROOM_NOT_AVAILABLE`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/BookingCode"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckInGuestRequest"
+            example:
+              roomId: 68ba3ad7-ce1a-43ac-b78e-b1bb87c73d2f
+      responses:
+        "200":
+          description: Gán phòng và check-in thành công.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckInGuestApiResponse"
+              example:
+                success: true
+                message: Check-in thành công
+                data:
+                  bookingId: 8a1f6e4c-5b3a-4d9d-9e3d-4c8a3a9a1001
+                  bookingCode: BK20260819000001
+                  bookingStatus: CHECKED_IN
+                  room:
+                    roomId: 68ba3ad7-ce1a-43ac-b78e-b1bb87c73d2f
+                    roomNumber: "0501"
+                    floor: 5
+                    status: OCCUPIED
+                  checkedInAt: "2026-08-19T07:05:31Z"
+                timestamp: "2026-08-19T07:05:31Z"
+        "400":
+          description: Body hoặc UUID không hợp lệ (`VALIDATION_FAILED`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+              example:
+                code: VALIDATION_FAILED
+                message: Dữ liệu không hợp lệ
+                path: /api/v1/bookings/BK20260819000001/check-in
+                timestamp: "2026-08-19T07:05:31Z"
+                errors:
+                  roomId: Room ID không được để trống
+        "401":
+          description: Thiếu hoặc access token không hợp lệ (`AUTH_UNAUTHORIZED`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "403":
+          description: Người gọi không có vai trò RECEPTIONIST (`AUTH_FORBIDDEN`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "404":
+          description: Không tìm thấy booking (`BOOKING_NOT_FOUND`) hoặc room (`ROOM_NOT_FOUND`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "409":
+          description: |
+            Vi phạm quy tắc nghiệp vụ. `code` nhận một trong các giá trị:
+
+            - `BOOKING_NOT_CONFIRMED`: booking không ở trạng thái `CONFIRMED`.
+            - `BOOKING_ALREADY_CHECKED_IN`: booking đã được check-in trước đó.
+            - `CHECK_IN_DATE_NOT_ALLOWED`: chưa đến hoặc đã qua ngày check-in.
+            - `ROOM_TYPE_MISMATCH`: room không thuộc hạng phòng đã đặt.
+            - `ROOM_NOT_AVAILABLE`: room không còn ở trạng thái `AVAILABLE`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+              examples:
+                roomNotAvailable:
+                  summary: Phòng vừa được lễ tân khác sử dụng
+                  value:
+                    code: ROOM_NOT_AVAILABLE
+                    message: Phòng đã chọn không còn trống
+                    path: /api/v1/bookings/BK20260819000001/check-in
+                    timestamp: "2026-08-19T07:05:31Z"
+                    errors: {}
+                roomTypeMismatch:
+                  summary: Phòng sai hạng đã đặt
+                  value:
+                    code: ROOM_TYPE_MISMATCH
+                    message: Phòng đã chọn không thuộc hạng phòng của booking
+                    path: /api/v1/bookings/BK20260819000001/check-in
+                    timestamp: "2026-08-19T07:05:31Z"
+                    errors: {}
+        "500":
+          description: Lỗi hệ thống ngoài dự kiến.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+
+components:
+  parameters:
+    BookingCode:
+      name: bookingCode
+      in: path
+      required: true
+      description: Mã booking cần thao tác.
+      schema:
+        type: string
+        example: BK20260819000001
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token của nhân viên lễ tân.
+
+  schemas:
+    AvailablePhysicalRoomsApiResponse:
+      type: object
+      additionalProperties: false
+      required: [success, message, data, timestamp]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AvailablePhysicalRoom"
+        timestamp:
+          type: string
+          format: date-time
+
+    AvailablePhysicalRoom:
+      type: object
+      additionalProperties: false
+      required: [roomId, roomNumber, floor]
+      properties:
+        roomId:
+          type: string
+          format: uuid
+        roomNumber:
+          type: string
+        floor:
+          type: integer
+
+    CheckInGuestRequest:
+      type: object
+      additionalProperties: false
+      required: [roomId]
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: UUID của phòng vật lý được lễ tân chọn.
+
+    CheckInGuestApiResponse:
+      type: object
+      additionalProperties: false
+      required: [success, message, data, timestamp]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/CheckInGuestResult"
+        timestamp:
+          type: string
+          format: date-time
+
+    CheckInGuestResult:
+      type: object
+      additionalProperties: false
+      required: [bookingId, bookingCode, bookingStatus, room, checkedInAt]
+      properties:
+        bookingId:
+          type: string
+          format: uuid
+        bookingCode:
+          type: string
+          example: BK20260819000001
+        bookingStatus:
+          type: string
+          enum: [CHECKED_IN]
+        room:
+          $ref: "#/components/schemas/AssignedRoom"
+        checkedInAt:
+          type: string
+          format: date-time
+
+    AssignedRoom:
+      type: object
+      additionalProperties: false
+      required: [roomId, roomNumber, floor, status]
+      properties:
+        roomId:
+          type: string
+          format: uuid
+        roomNumber:
+          type: string
+        floor:
+          type: integer
+        status:
+          type: string
+          enum: [OCCUPIED]
+
+    ApiErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [code, message, path, timestamp, errors]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        errors:
+          type: object
+          additionalProperties:
+            type: string

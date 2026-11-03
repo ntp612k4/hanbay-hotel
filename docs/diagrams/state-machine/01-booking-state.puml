@@ -1,0 +1,76 @@
+@startuml
+!include ../common/style.puml
+
+title HANBAY HOTEL - Booking State Machine
+
+hide empty description
+
+[*] --> PENDING : create booking\n[room inventory available]
+
+state PENDING
+state CONFIRMED
+state CHECKED_IN
+state CHECKED_OUT
+state CANCELLED
+state EXPIRED
+
+PENDING --> CONFIRMED : payment confirmed\n[before expiresAt]
+PENDING --> CANCELLED : guest cancels
+PENDING --> EXPIRED : payment timeout\n[now >= expiresAt]
+PENDING --> CANCELLED : payment rejected / booking invalid
+
+CONFIRMED --> CHECKED_IN : receptionist checks in\n[room assigned and AVAILABLE]
+CONFIRMED --> CANCELLED : cancellation accepted\n[policy allows]
+
+CHECKED_IN --> CHECKED_OUT : receptionist checks out\n[no outstanding balance]
+
+CANCELLED --> [*]
+EXPIRED --> [*]
+CHECKED_OUT --> [*]
+
+note right of PENDING
+  A newly created booking holds inventory
+  for at most 15 minutes.
+
+  Counted in availability while:
+  status = PENDING and expiresAt > now.
+end note
+
+note right of CONFIRMED
+  Payment has been confirmed.
+  Physical room assignment may happen
+  before or during check-in.
+end note
+
+note right of CHECKED_IN
+  The assigned physical room is OCCUPIED.
+  Cancellation is no longer permitted.
+end note
+
+note right of CHECKED_OUT
+  The guest has left.
+  The room becomes DIRTY. This is the
+  terminal successful booking state.
+end note
+
+note bottom of CANCELLED
+  Booking was cancelled explicitly or invalidated.
+  Inventory hold is released.
+  Refund handling, when applicable,
+  belongs to the payment lifecycle.
+end note
+
+note bottom of EXPIRED
+  Payment was not confirmed before expiresAt.
+  The RoomType inventory hold is released.
+  No physical Room needs to be unassigned.
+end note
+
+legend bottom
+  == Transition guard examples ==
+  [room inventory available] : availability is rechecked inside a transaction
+  [before expiresAt]          : expired bookings cannot be confirmed
+  [policy allows]             : cancellation policy is satisfied
+endlegend
+
+@enduml

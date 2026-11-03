@@ -1,0 +1,55 @@
+@startuml
+!include ../common/style.puml
+
+title HANBAY HOTEL - Search Available Rooms
+
+autonumber
+
+actor Guest
+boundary "Web Application" as Web
+control "Room Search API" as API
+control "Availability Service" as Availability
+control "Pricing Service" as Pricing
+database "Hotel Database" as DB
+
+Guest -> Web: Enter dates and guest count
+Web -> API: Search available rooms
+API -> Availability: search(criteria)
+
+Availability -> Availability: Validate search criteria
+
+alt Invalid criteria
+    Availability --> API: Validation error
+    API --> Web: 400 Bad Request
+    Web --> Guest: Show validation message
+else Valid criteria
+    Availability -> DB: Load active room types\nand room quantities
+    DB --> Availability: Room type inventory
+
+    Availability -> DB: Count overlapping bookings\nfor requested date range
+    DB --> Availability: Occupied quantities
+
+    Availability -> Availability: Calculate available quantity
+
+    alt No available room type
+        Availability --> API: Empty result
+        API --> Web: No rooms available
+        Web --> Guest: Suggest different dates
+    else Rooms available
+        Availability -> Pricing: calculatePrices(roomTypes, stayPeriod)
+        Pricing -> DB: Load pricing rules
+        DB --> Pricing: Base, weekend and holiday rates
+        Pricing --> Availability: Price breakdown
+
+        Availability --> API: Available rooms and prices
+        API --> Web: Search results
+        Web --> Guest: Display available options
+    end
+end
+
+note over Availability, DB
+Availability is calculated using overlapping bookings,
+not only the current status of physical rooms.
+end note
+
+@enduml

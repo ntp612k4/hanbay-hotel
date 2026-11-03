@@ -1,0 +1,108 @@
+.room-type-catalog {
+  padding-block: 80px;
+}
+
+.room-type-catalog__container {
+  width: min(calc(100% - 48px), 1180px);
+  margin-inline: auto;
+}
+
+.room-type-catalog__kicker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.room-type-catalog__search {
+  width: min(100%, 520px);
+}
+
+.room-type-catalog__sort {
+  min-width: 190px;
+}
+
+.room-type-card.ant-card {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.room-type-card .ant-card-body {
+  display: flex;
+  flex: 1;
+}
+
+.room-type-card__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.room-type-card__detail-link {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.room-type-card .ant-card-cover {
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.room-type-card .ant-card-cover img {
+  transition: transform 220ms ease;
+}
+
+.room-type-card:hover .ant-card-cover img,
+.room-type-card:focus-within .ant-card-cover img {
+  transform: scale(1.03);
+}
+
+.room-type-card__title.ant-typography {
+  display: -webkit-box;
+  min-height: 2.8em;
+  overflow: hidden;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  transition: color 180ms ease;
+}
+
+.room-type-card:hover .room-type-card__title,
+.room-type-card:focus-within .room-type-card__title {
+  color: var(--color-accent);
+}
+
+.room-type-card__detail-link:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.room-type-card__booking-link {
+  position: relative;
+  z-index: 2;
+}
+
+@media (max-width: 767px) {
+  .room-type-catalog {
+    padding-block: 56px;
+  }
+
+  .room-type-catalog__container {
+    width: calc(100% - 32px);
+  }
+
+  .room-type-catalog__toolbar,
+  .room-type-catalog__search,
+  .room-type-catalog__sort {
+    width: 100%;
+  }
+
+  .room-type-card__footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

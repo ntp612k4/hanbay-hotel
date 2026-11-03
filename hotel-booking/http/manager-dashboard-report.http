@@ -1,0 +1,12 @@
+@baseUrl = http://localhost:8080
+@accessToken = replace-with-manager-or-admin-access-token
+
+### Manager dashboard report
+GET {{baseUrl}}/api/v1/reports/dashboard?from=2026-08-01&to=2026-09-01&currency=VND
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+### Invalid range
+GET {{baseUrl}}/api/v1/reports/dashboard?from=2026-09-01&to=2026-08-01
+Authorization: Bearer {{accessToken}}
+Accept: application/json

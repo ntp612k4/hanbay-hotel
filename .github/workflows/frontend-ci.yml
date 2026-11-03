@@ -1,0 +1,42 @@
+name: Frontend CI
+
+on:
+  workflow_call:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'client/**'
+      - '.github/workflows/**'
+  pull_request:
+    paths:
+      - 'client/**'
+      - '.github/workflows/**'
+      - 'deploy/vps/**'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        working-directory: client
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run test:run
+      - run: npm run build

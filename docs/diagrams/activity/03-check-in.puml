@@ -1,0 +1,65 @@
+@startuml
+!include ../common/style.puml
+
+title HANBAY HOTEL - Guest Check-in Activity Diagram
+
+|Receptionist|
+start
+:Search booking by code,
+name, email or phone;
+
+|System|
+:Load booking details;
+if (Booking found?) then (Yes)
+  :Validate booking status and stay date;
+else (No)
+  :Return booking not found;
+  stop
+endif
+
+if (Status = CONFIRMED?) then (Yes)
+else (No)
+  :Reject invalid booking state;
+  stop
+endif
+
+|Receptionist|
+:Verify guest identity and booking data;
+if (Guest information correct?) then (Yes)
+else (No)
+  :Resolve discrepancy or stop check-in;
+  stop
+endif
+
+|System|
+:Find AVAILABLE physical rooms
+of reserved room type;
+if (Physical room already assigned?) then (Yes)
+  :Load assigned room;
+else (No)
+  :Return available room list;
+  |Receptionist|
+  :Select physical room;
+  |System|
+  :Begin transaction;
+  :Lock selected room row;
+  :Re-check room status;
+  if (Room still AVAILABLE?) then (Yes)
+    :Assign room to booking;
+  else (No)
+    :Rollback transaction;
+    :Request another room selection;
+    stop
+  endif
+endif
+
+:Update room status to OCCUPIED;
+:Update booking status to CHECKED_IN;
+:Append booking status history;
+:Commit transaction;
+
+|Receptionist|
+:Provide room/key information;
+:Complete check-in;
+stop
+@enduml

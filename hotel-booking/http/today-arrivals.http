@@ -1,0 +1,44 @@
+@baseUrl = http://localhost:8080/api/v1
+@receptionistToken = replace-with-receptionist-jwt
+@managerToken = replace-with-manager-jwt
+@adminToken = replace-with-admin-jwt
+@housekeeperToken = replace-with-housekeeper-jwt
+
+### 1. Receptionist xem danh sách khách đến hôm nay
+GET {{baseUrl}}/front-desk/arrivals/today
+Authorization: Bearer {{receptionistToken}}
+
+### 2. Phân trang tùy chỉnh
+GET {{baseUrl}}/front-desk/arrivals/today?page=1&size=5
+Authorization: Bearer {{receptionistToken}}
+
+### 3. Thiếu access token - kỳ vọng 401 AUTH_UNAUTHORIZED
+GET {{baseUrl}}/front-desk/arrivals/today
+
+### 4. Housekeeper không có quyền - kỳ vọng 403 AUTH_FORBIDDEN
+GET {{baseUrl}}/front-desk/arrivals/today
+Authorization: Bearer {{housekeeperToken}}
+
+### 5. Page không hợp lệ - kỳ vọng 400 VALIDATION_FAILED
+GET {{baseUrl}}/front-desk/arrivals/today?page=-1&size=20
+Authorization: Bearer {{receptionistToken}}
+
+### 6. Size vượt giới hạn - kỳ vọng 400 VALIDATION_FAILED
+GET {{baseUrl}}/front-desk/arrivals/today?page=0&size=101
+Authorization: Bearer {{receptionistToken}}
+
+### 7. Manager được phép truy cập - kỳ vọng 200
+GET {{baseUrl}}/front-desk/arrivals/today
+Authorization: Bearer {{managerToken}}
+
+### 8. Admin được phép truy cập - kỳ vọng 200
+GET {{baseUrl}}/front-desk/arrivals/today
+Authorization: Bearer {{adminToken}}
+
+### 9. Page sai kiểu - kỳ vọng 400 VALIDATION_FAILED
+GET {{baseUrl}}/front-desk/arrivals/today?page=abc&size=20
+Authorization: Bearer {{receptionistToken}}
+
+### 10. Size bằng 0 - kỳ vọng 400 VALIDATION_FAILED
+GET {{baseUrl}}/front-desk/arrivals/today?page=0&size=0
+Authorization: Bearer {{receptionistToken}}

@@ -1,0 +1,45 @@
+spring:
+  ai:
+    model:
+      embedding: ${AI_EMBEDDING_MODEL:openai}
+    openai:
+      api-key: ${OPENAI_API_KEY}
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+ai:
+  policy-rag:
+    rag-enabled: ${AI_POLICY_RAG_ENABLED:true}
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration-seconds: ${JWT_ACCESS_TOKEN_EXPIRATION_SECONDS}
+  issuer: ${JWT_ISSUER}
+  refresh-token-expiration-seconds: ${REFRESH_TOKEN_EXPIRATION_SECONDS}
+
+payment:
+  expiration-minutes: 15
+
+  sepay:
+    bank-code: ${SEPAY_BANK_CODE}
+    account-number: ${SEPAY_BANK_ACCOUNT_NUMBER}
+    account-name: ${SEPAY_BANK_ACCOUNT_NAME}
+    qr-base-url: https://qr.sepay.vn/img
+    webhook-api-key: ${SEPAY_WEBHOOK_API_KEY}
+
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
+  default-admin:
+    enabled: ${ADMIN_DEFAULT_ENABLED:false}
+    email: ${ADMIN_DEFAULT_EMAIL}
+    phone: ${ADMIN_DEFAULT_PHONE}
+    full-name: ${ADMIN_DEFAULT_FULL_NAME}
+    password: ${ADMIN_DEFAULT_PASSWORD}

@@ -1,0 +1,11 @@
+.room-card-description.ant-typography {
+  display: -webkit-box;
+  height: 6.4em;
+  margin: 0;
+  overflow: hidden;
+  line-height: 1.6;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  flex-shrink: 0;
+}

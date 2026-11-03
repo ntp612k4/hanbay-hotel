@@ -1,0 +1,19 @@
+@baseUrl = http://localhost:8080/api/v1
+@checkIn = 2027-08-12
+@checkOut = 2027-08-15
+
+### HAN-24 - Tìm hạng phòng còn trống với giá lưu trú đã tính
+GET {{baseUrl}}/room-types/available?checkIn={{checkIn}}&checkOut={{checkOut}}&adults=2&children=0&page=0&size=6
+Accept: application/json
+
+### HAN-24 - Kiểm tra lại một hạng phòng trước khi đặt
+GET {{baseUrl}}/room-types/available?checkIn={{checkIn}}&checkOut={{checkOut}}&adults=2&children=0&roomTypeId=10000000-0000-0000-0000-000000000001&page=0&size=1
+Accept: application/json
+
+### HAN-24 - Khoảng ngày không hợp lệ: ngày trả phải sau ngày nhận
+GET {{baseUrl}}/room-types/available?checkIn={{checkIn}}&checkOut={{checkIn}}&adults=2&children=0&page=0&size=6
+Accept: application/json
+
+### HAN-24 - Số khách không hợp lệ: phải có ít nhất một người lớn
+GET {{baseUrl}}/room-types/available?checkIn={{checkIn}}&checkOut={{checkOut}}&adults=0&children=0&page=0&size=6
+Accept: application/json

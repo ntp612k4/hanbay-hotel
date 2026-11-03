@@ -1,0 +1,7 @@
+CREATE SEQUENCE booking_code_seq
+    AS BIGINT
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 50;

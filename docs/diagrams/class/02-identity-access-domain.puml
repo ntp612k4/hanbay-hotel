@@ -1,0 +1,63 @@
+@startuml
+!include ../common/style.puml
+
+title HANBAY HOTEL - Identity and Access Domain
+left to right direction
+hide methods
+
+class User <<entity>> {
+  +UUID id
+  +String email
+  +String passwordHash
+  +String fullName
+  +String phone
+  +UserStatus status
+  +Instant createdAt
+  +Instant updatedAt
+}
+
+class Role <<entity>> {
+  +UUID id
+  +RoleName name
+  +String description
+}
+
+class UserRole <<association entity>> {
+  +UUID userId
+  +UUID roleId
+  +Instant assignedAt
+}
+
+class RefreshToken <<entity>> {
+  +UUID id
+  +String tokenHash
+  +Instant expiresAt
+  +Instant revokedAt
+}
+
+enum RoleName {
+  ADMIN
+  RECEPTIONIST
+  HOUSEKEEPER
+  MANAGER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  LOCKED
+}
+
+User "1" *-- "0..*" UserRole
+Role "1" *-- "0..*" UserRole
+User "1" *-- "0..*" RefreshToken
+Role --> RoleName
+User --> UserStatus
+
+note right of RoleName
+  Manager handles hotel operations.
+  Admin handles accounts,
+  roles and technical configuration.
+end note
+
+@enduml

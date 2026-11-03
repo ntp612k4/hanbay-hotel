@@ -1,0 +1,80 @@
+.booking-public-shell {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+.create-booking-page {
+  flex: 1;
+  min-height: 100vh;
+  padding: 32px 40px 72px;
+  background: var(--color-surface);
+}
+
+.booking-page-shell {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.guest-counter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 72px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+}
+
+.guest-counter > div {
+  display: grid;
+  gap: 2px;
+}
+
+.guest-counter span {
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+}
+
+.addon-card-interactive {
+  transition: transform 180ms ease;
+}
+
+.addon-card-interactive:hover {
+  transform: translateY(-2px);
+}
+
+.booking-summary-sticky {
+  position: sticky;
+  top: 24px;
+}
+
+.page-enter {
+  animation: booking-fade-up 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes booking-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 767px) {
+  .create-booking-page {
+    padding: 20px 16px 48px;
+  }
+
+  .guest-counter {
+    margin-bottom: 12px;
+  }
+}

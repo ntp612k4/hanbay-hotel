@@ -1,0 +1,942 @@
+openapi: 3.0.3
+
+info:
+  title: HANBAY Hotel Room Maintenance Request API
+  version: 1.0.0
+  description: |
+    API backend để Manager tạo, xem và cập nhật tiến trình xử lý yêu cầu bảo trì
+    của một phòng vật lý.
+
+    `MaintenanceRequest.status` mô tả tiến trình xử lý yêu cầu và chỉ đi theo
+    `PENDING -> IN_PROGRESS -> COMPLETED`. `Room.status` mô tả trạng thái vận hành
+    của phòng; hai loại trạng thái không được dùng thay thế cho nhau.
+
+    Khi tạo yêu cầu, phòng phải đang `AVAILABLE` và được chuyển sang `MAINTENANCE`
+    trong cùng transaction. Khi yêu cầu chuyển từ `IN_PROGRESS` sang `COMPLETED`,
+    phòng được trả về `AVAILABLE` theo domain rule hiện hành.
+    Mỗi phòng chỉ có một phiếu `PENDING` hoặc `IN_PROGRESS`. API đổi trạng thái
+    phòng trực tiếp không được kết thúc bảo trì khi còn phiếu mở; trả lỗi
+    `409 ROOM_HAS_ACTIVE_MAINTENANCE_REQUEST` để người quản lý xử lý qua phiếu.
+
+    Tất cả endpoint chỉ dành cho role `MANAGER`. `ADMIN` và các role khác nhận
+    `403 AUTH_FORBIDDEN`. Contract không cung cấp DELETE, filter hay AI interpret.
+
+servers:
+  - url: http://localhost:8080
+    description: Môi trường phát triển cục bộ
+
+tags:
+  - name: Room Maintenance
+    description: Quản lý yêu cầu bảo trì phòng vật lý
+  - name: Physical Rooms
+    description: Danh sách phòng vật lý phục vụ quản lý vận hành
+
+paths:
+  /api/v1/rooms:
+    get:
+      tags: [Physical Rooms]
+      summary: Xem danh sách phòng vật lý
+      operationId: getPhysicalRooms
+      description: |
+        Trả về phòng vật lý cùng trạng thái vận hành hiện tại để Manager chọn `roomId`
+        khi tạo yêu cầu bảo trì. Endpoint không tự xác định phòng nào đủ điều kiện bảo trì;
+        `POST /api/v1/maintenance-requests` vẫn thực hiện kiểm tra nghiệp vụ.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Lấy danh sách phòng vật lý thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhysicalRoomPageApiResponse'
+              example:
+                success: true
+                message: Lấy danh sách phòng vật lý thành công
+                data:
+                  content:
+                    - roomId: 10000000-0000-0000-0000-000000000001
+                      roomNumber: DLX-101
+                      floor: 1
+                      status: AVAILABLE
+                  page: 0
+                  size: 20
+                  totalElements: 1
+                  totalPages: 1
+                  first: true
+                  last: true
+                timestamp: '2026-09-04T08:00:00Z'
+        '400':
+          $ref: '#/components/responses/PaginationBadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessForbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/maintenance-requests:
+    post:
+      tags: [Room Maintenance]
+      summary: Tạo yêu cầu bảo trì
+      operationId: createMaintenanceRequest
+      description: |
+        Tạo yêu cầu ở trạng thái `PENDING` cho đúng phòng vật lý được nhận diện
+        bằng `roomId`. Phòng phải đang `AVAILABLE`; backend khóa phòng để ghi,
+        chuyển phòng sang `MAINTENANCE` và lưu yêu cầu trong cùng transaction.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMaintenanceRequestRequest'
+            examples:
+              airConditionerIssue:
+                summary: Điều hòa không làm lạnh
+                value:
+                  roomId: 10000000-0000-0000-0000-000000000001
+                  title: Kiểm tra điều hòa
+                  description: Điều hòa không làm lạnh và phát ra tiếng ồn lớn.
+              withoutDescription:
+                summary: Không cung cấp mô tả bổ sung
+                value:
+                  roomId: 10000000-0000-0000-0000-000000000001
+                  title: Kiểm tra khóa cửa
+      responses:
+        '201':
+          description: Tạo yêu cầu thành công; phòng đã chuyển sang MAINTENANCE.
+          headers:
+            Location:
+              description: Đường dẫn tới yêu cầu bảo trì vừa tạo.
+              schema:
+                type: string
+              example: /api/v1/maintenance-requests/4c2ff15b-c288-4722-b4b8-8e73d3f55337
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceRequestApiResponse'
+              example:
+                success: true
+                message: Tạo yêu cầu bảo trì thành công
+                data:
+                  id: 4c2ff15b-c288-4722-b4b8-8e73d3f55337
+                  roomId: 10000000-0000-0000-0000-000000000001
+                  roomNumber: DLX-101
+                  roomStatus: MAINTENANCE
+                  title: Kiểm tra điều hòa
+                  description: Điều hòa không làm lạnh và phát ra tiếng ồn lớn.
+                  status: PENDING
+                  createdById: 30000000-0000-0000-0000-000000000001
+                  createdByName: Nguyễn Văn Quản Lý
+                  createdAt: '2026-09-04T08:00:00Z'
+                  updatedAt: '2026-09-04T08:00:00Z'
+                  startedAt: null
+                  completedAt: null
+                timestamp: '2026-09-04T08:00:00Z'
+        '400':
+          $ref: '#/components/responses/CreateBadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessForbidden'
+        '404':
+          $ref: '#/components/responses/RoomOrManagerNotFound'
+        '409':
+          $ref: '#/components/responses/RoomMaintenanceStartConflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      tags: [Room Maintenance]
+      summary: Xem danh sách yêu cầu bảo trì
+      operationId: getMaintenanceRequests
+      description: |
+        Trả về `PageResponse` không có filter. Dữ liệu được sắp xếp theo
+        `createdAt` giảm dần, sau đó `id` tăng dần để giữ thứ tự ổn định.
+        Trang rỗng vẫn trả `200 OK` với `content=[]`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Lấy danh sách yêu cầu bảo trì thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceRequestPageApiResponse'
+              examples:
+                withData:
+                  summary: Trang có dữ liệu
+                  value:
+                    success: true
+                    message: Lấy danh sách yêu cầu bảo trì thành công
+                    data:
+                      content:
+                        - id: 4c2ff15b-c288-4722-b4b8-8e73d3f55337
+                          roomId: 10000000-0000-0000-0000-000000000001
+                          roomNumber: DLX-101
+                          roomStatus: MAINTENANCE
+                          title: Kiểm tra điều hòa
+                          status: IN_PROGRESS
+                          createdById: 30000000-0000-0000-0000-000000000001
+                          createdByName: Nguyễn Văn Quản Lý
+                          createdAt: '2026-09-04T08:00:00Z'
+                          startedAt: '2026-09-04T08:15:00Z'
+                          completedAt: null
+                      page: 0
+                      size: 20
+                      totalElements: 1
+                      totalPages: 1
+                      first: true
+                      last: true
+                    timestamp: '2026-09-04T08:20:00Z'
+                empty:
+                  summary: Trang không có dữ liệu
+                  value:
+                    success: true
+                    message: Lấy danh sách yêu cầu bảo trì thành công
+                    data:
+                      content: []
+                      page: 0
+                      size: 20
+                      totalElements: 0
+                      totalPages: 0
+                      first: true
+                      last: true
+                    timestamp: '2026-09-04T08:20:00Z'
+        '400':
+          $ref: '#/components/responses/PaginationBadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessForbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/maintenance-requests/{id}:
+    parameters:
+      - $ref: '#/components/parameters/MaintenanceRequestId'
+    get:
+      tags: [Room Maintenance]
+      summary: Xem chi tiết yêu cầu bảo trì
+      operationId: getMaintenanceRequestById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lấy chi tiết yêu cầu bảo trì thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceRequestApiResponse'
+              example:
+                success: true
+                message: Lấy chi tiết yêu cầu bảo trì thành công
+                data:
+                  id: 4c2ff15b-c288-4722-b4b8-8e73d3f55337
+                  roomId: 10000000-0000-0000-0000-000000000001
+                  roomNumber: DLX-101
+                  roomStatus: MAINTENANCE
+                  title: Kiểm tra điều hòa
+                  description: Điều hòa không làm lạnh và phát ra tiếng ồn lớn.
+                  status: IN_PROGRESS
+                  createdById: 30000000-0000-0000-0000-000000000001
+                  createdByName: Nguyễn Văn Quản Lý
+                  createdAt: '2026-09-04T08:00:00Z'
+                  updatedAt: '2026-09-04T08:15:00Z'
+                  startedAt: '2026-09-04T08:15:00Z'
+                  completedAt: null
+                timestamp: '2026-09-04T08:20:00Z'
+        '400':
+          $ref: '#/components/responses/InvalidMaintenanceRequestId'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessForbidden'
+        '404':
+          $ref: '#/components/responses/MaintenanceRequestNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/maintenance-requests/{id}/status:
+    parameters:
+      - $ref: '#/components/parameters/MaintenanceRequestId'
+    patch:
+      tags: [Room Maintenance]
+      summary: Cập nhật trạng thái xử lý yêu cầu bảo trì
+      operationId: updateMaintenanceRequestStatus
+      description: |
+        Chỉ chấp nhận transition kế tiếp trong workflow:
+
+        - `PENDING -> IN_PROGRESS`: ghi `startedAt`; phòng vẫn `MAINTENANCE`.
+        - `IN_PROGRESS -> COMPLETED`: ghi `completedAt`; phòng chuyển về `AVAILABLE`.
+
+        Không cho phép bỏ qua bước, lặp lại trạng thái hoặc chuyển ngược.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMaintenanceRequestStatusRequest'
+            examples:
+              startWork:
+                summary: Bắt đầu xử lý
+                value:
+                  status: IN_PROGRESS
+              completeWork:
+                summary: Hoàn tất xử lý
+                value:
+                  status: COMPLETED
+      responses:
+        '200':
+          description: Cập nhật trạng thái yêu cầu bảo trì thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceRequestApiResponse'
+              examples:
+                inProgress:
+                  summary: PENDING chuyển sang IN_PROGRESS
+                  value:
+                    success: true
+                    message: Cập nhật trạng thái yêu cầu bảo trì thành công
+                    data:
+                      id: 4c2ff15b-c288-4722-b4b8-8e73d3f55337
+                      roomId: 10000000-0000-0000-0000-000000000001
+                      roomNumber: DLX-101
+                      roomStatus: MAINTENANCE
+                      title: Kiểm tra điều hòa
+                      description: Điều hòa không làm lạnh và phát ra tiếng ồn lớn.
+                      status: IN_PROGRESS
+                      createdById: 30000000-0000-0000-0000-000000000001
+                      createdByName: Nguyễn Văn Quản Lý
+                      createdAt: '2026-09-04T08:00:00Z'
+                      updatedAt: '2026-09-04T08:15:00Z'
+                      startedAt: '2026-09-04T08:15:00Z'
+                      completedAt: null
+                    timestamp: '2026-09-04T08:15:00Z'
+                completed:
+                  summary: IN_PROGRESS chuyển sang COMPLETED
+                  value:
+                    success: true
+                    message: Cập nhật trạng thái yêu cầu bảo trì thành công
+                    data:
+                      id: 4c2ff15b-c288-4722-b4b8-8e73d3f55337
+                      roomId: 10000000-0000-0000-0000-000000000001
+                      roomNumber: DLX-101
+                      roomStatus: AVAILABLE
+                      title: Kiểm tra điều hòa
+                      description: Điều hòa không làm lạnh và phát ra tiếng ồn lớn.
+                      status: COMPLETED
+                      createdById: 30000000-0000-0000-0000-000000000001
+                      createdByName: Nguyễn Văn Quản Lý
+                      createdAt: '2026-09-04T08:00:00Z'
+                      updatedAt: '2026-09-04T09:30:00Z'
+                      startedAt: '2026-09-04T08:15:00Z'
+                      completedAt: '2026-09-04T09:30:00Z'
+                    timestamp: '2026-09-04T09:30:00Z'
+        '400':
+          $ref: '#/components/responses/UpdateStatusBadRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessForbidden'
+        '404':
+          $ref: '#/components/responses/MaintenanceOrRoomNotFound'
+        '409':
+          $ref: '#/components/responses/UpdateStatusConflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token của tài khoản có role MANAGER; ADMIN không được phép.
+
+  parameters:
+    MaintenanceRequestId:
+      name: id
+      in: path
+      required: true
+      description: UUID của yêu cầu bảo trì.
+      schema:
+        type: string
+        format: uuid
+      example: 4c2ff15b-c288-4722-b4b8-8e73d3f55337
+    Page:
+      name: page
+      in: query
+      description: Số trang, bắt đầu từ 0.
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    Size:
+      name: size
+      in: query
+      description: Số yêu cầu trên một trang.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  schemas:
+    CreateMaintenanceRequestRequest:
+      type: object
+      additionalProperties: false
+      required: [roomId, title]
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: ID của phòng vật lý, không phải ID hạng phòng.
+          example: 10000000-0000-0000-0000-000000000001
+        title:
+          type: string
+          minLength: 1
+          maxLength: 150
+          description: Tiêu đề sau khi loại bỏ khoảng trắng ở hai đầu phải có nội dung.
+          example: Kiểm tra điều hòa
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+          description: Mô tả tùy chọn; chuỗi trống hoặc chỉ có khoảng trắng được chuẩn hóa thành null.
+          example: Điều hòa không làm lạnh và phát ra tiếng ồn lớn.
+
+    UpdateMaintenanceRequestStatusRequest:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [PENDING, IN_PROGRESS, COMPLETED]
+          description: Backend chỉ chấp nhận trạng thái kế tiếp hợp lệ; PENDING không thể được dùng để quay lại.
+          example: IN_PROGRESS
+
+    MaintenanceRequestStatus:
+      type: string
+      description: Tiến trình xử lý yêu cầu bảo trì, độc lập với RoomStatus.
+      enum: [PENDING, IN_PROGRESS, COMPLETED]
+
+    RoomStatus:
+      type: string
+      description: Trạng thái vận hành hiện tại của phòng vật lý.
+      enum: [AVAILABLE, OCCUPIED, DIRTY, CLEANING, MAINTENANCE, OUT_OF_SERVICE]
+
+    MaintenanceRequestResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - roomId
+        - roomNumber
+        - roomStatus
+        - title
+        - status
+        - createdById
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        roomId:
+          type: string
+          format: uuid
+        roomNumber:
+          type: string
+          maxLength: 30
+          example: DLX-101
+        roomStatus:
+          $ref: '#/components/schemas/RoomStatus'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 150
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+        status:
+          $ref: '#/components/schemas/MaintenanceRequestStatus'
+        createdById:
+          type: string
+          format: uuid
+        createdByName:
+          type: string
+          nullable: true
+          maxLength: 150
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Được ghi khi PENDING chuyển sang IN_PROGRESS.
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Được ghi khi IN_PROGRESS chuyển sang COMPLETED.
+
+    MaintenanceRequestListItemResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - roomId
+        - roomNumber
+        - roomStatus
+        - title
+        - status
+        - createdById
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        roomId:
+          type: string
+          format: uuid
+        roomNumber:
+          type: string
+          maxLength: 30
+          example: DLX-101
+        roomStatus:
+          $ref: '#/components/schemas/RoomStatus'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 150
+        status:
+          $ref: '#/components/schemas/MaintenanceRequestStatus'
+        createdById:
+          type: string
+          format: uuid
+        createdByName:
+          type: string
+          nullable: true
+          maxLength: 150
+        createdAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    MaintenanceRequestPage:
+      type: object
+      additionalProperties: false
+      required: [content, page, size, totalElements, totalPages, first, last]
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaintenanceRequestListItemResponse'
+        page:
+          type: integer
+          minimum: 0
+        size:
+          type: integer
+          minimum: 1
+        totalElements:
+          type: integer
+          format: int64
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+        first:
+          type: boolean
+        last:
+          type: boolean
+
+    MaintenanceRequestApiResponse:
+      type: object
+      additionalProperties: false
+      required: [success, message, data, timestamp]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/MaintenanceRequestResponse'
+        timestamp:
+          type: string
+          format: date-time
+
+    MaintenanceRequestPageApiResponse:
+      type: object
+      additionalProperties: false
+      required: [success, message, data, timestamp]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        message:
+          type: string
+          example: Lấy danh sách yêu cầu bảo trì thành công
+        data:
+          $ref: '#/components/schemas/MaintenanceRequestPage'
+        timestamp:
+          type: string
+          format: date-time
+
+    PhysicalRoomListItemResponse:
+      type: object
+      additionalProperties: false
+      required: [roomId, roomNumber, floor, status]
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: ID của phòng vật lý.
+        roomNumber:
+          type: string
+        floor:
+          type: integer
+        status:
+          type: string
+          enum: [AVAILABLE, OCCUPIED, DIRTY, CLEANING, MAINTENANCE, OUT_OF_SERVICE]
+          description: Trạng thái vận hành hiện tại; không phải kết quả kiểm tra eligibility.
+
+    PhysicalRoomPageApiResponse:
+      type: object
+      additionalProperties: false
+      required: [success, message, data, timestamp]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        message:
+          type: string
+        data:
+          type: object
+          additionalProperties: false
+          required: [content, page, size, totalElements, totalPages, first, last]
+          properties:
+            content:
+              type: array
+              items:
+                $ref: '#/components/schemas/PhysicalRoomListItemResponse'
+            page:
+              type: integer
+            size:
+              type: integer
+            totalElements:
+              type: integer
+              format: int64
+            totalPages:
+              type: integer
+            first:
+              type: boolean
+            last:
+              type: boolean
+        timestamp:
+          type: string
+          format: date-time
+
+    ApiErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [code, message, path, timestamp, errors]
+      properties:
+        code:
+          type: string
+          example: VALIDATION_FAILED
+        message:
+          type: string
+        path:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+
+  responses:
+    CreateBadRequest:
+      description: DTO không hợp lệ, JSON sai định dạng hoặc status/UUID không đọc được.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          examples:
+            missingTitle:
+              summary: Thiếu tiêu đề
+              value:
+                code: VALIDATION_FAILED
+                message: Dữ liệu gửi lên không hợp lệ
+                path: /api/v1/maintenance-requests
+                timestamp: '2026-09-04T08:00:00Z'
+                errors:
+                  title: Tiêu đề bảo trì không được để trống
+            titleTooLong:
+              summary: Tiêu đề vượt quá 150 ký tự
+              value:
+                code: VALIDATION_FAILED
+                message: Dữ liệu gửi lên không hợp lệ
+                path: /api/v1/maintenance-requests
+                timestamp: '2026-09-04T08:00:00Z'
+                errors:
+                  title: Tiêu đề bảo trì không được vượt quá 150 ký tự
+            malformedJson:
+              summary: JSON sai định dạng
+              value:
+                code: MALFORMED_REQUEST
+                message: Nội dung yêu cầu không đúng định dạng
+                path: /api/v1/maintenance-requests
+                timestamp: '2026-09-04T08:00:00Z'
+                errors: {}
+
+    PaginationBadRequest:
+      description: `page` hoặc `size` không hợp lệ.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          examples:
+            negativePage:
+              summary: Page âm
+              value:
+                code: VALIDATION_FAILED
+                message: Dữ liệu gửi lên không hợp lệ
+                path: /api/v1/maintenance-requests
+                timestamp: '2026-09-04T08:00:00Z'
+                errors:
+                  page: Chỉ số trang phải lớn hơn hoặc bằng 0
+            invalidSize:
+              summary: Size ngoài khoảng 1 đến 100
+              value:
+                code: VALIDATION_FAILED
+                message: Dữ liệu gửi lên không hợp lệ
+                path: /api/v1/maintenance-requests
+                timestamp: '2026-09-04T08:00:00Z'
+                errors:
+                  size: Số phần tử mỗi trang phải từ 1 đến 100
+            wrongType:
+              summary: Page sai kiểu dữ liệu
+              value:
+                code: VALIDATION_FAILED
+                message: Dữ liệu gửi lên không hợp lệ
+                path: /api/v1/maintenance-requests
+                timestamp: '2026-09-04T08:00:00Z'
+                errors:
+                  page: page phải có kiểu dữ liệu hợp lệ: int
+
+    InvalidMaintenanceRequestId:
+      description: Path parameter `id` không phải UUID hợp lệ.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          example:
+            code: VALIDATION_FAILED
+            message: Dữ liệu gửi lên không hợp lệ
+            path: /api/v1/maintenance-requests/not-a-uuid
+            timestamp: '2026-09-04T08:00:00Z'
+            errors:
+              id: 'id phải có kiểu dữ liệu hợp lệ: uuid'
+
+    UpdateStatusBadRequest:
+      description: ID, body hoặc giá trị status không hợp lệ.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          examples:
+            missingStatus:
+              summary: Thiếu status
+              value:
+                code: VALIDATION_FAILED
+                message: Dữ liệu gửi lên không hợp lệ
+                path: /api/v1/maintenance-requests/4c2ff15b-c288-4722-b4b8-8e73d3f55337/status
+                timestamp: '2026-09-04T08:15:00Z'
+                errors:
+                  status: Trạng thái yêu cầu bảo trì không được để trống
+            unknownStatus:
+              summary: Enum không tồn tại
+              value:
+                code: MALFORMED_REQUEST
+                message: Nội dung yêu cầu không đúng định dạng
+                path: /api/v1/maintenance-requests/4c2ff15b-c288-4722-b4b8-8e73d3f55337/status
+                timestamp: '2026-09-04T08:15:00Z'
+                errors: {}
+            invalidId:
+              summary: ID không phải UUID
+              value:
+                code: VALIDATION_FAILED
+                message: Dữ liệu gửi lên không hợp lệ
+                path: /api/v1/maintenance-requests/not-a-uuid/status
+                timestamp: '2026-09-04T08:15:00Z'
+                errors:
+                  id: 'id phải có kiểu dữ liệu hợp lệ: uuid'
+
+    AuthenticationRequired:
+      description: Thiếu access token, token không hợp lệ hoặc hết hạn.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          example:
+            code: AUTH_UNAUTHORIZED
+            message: Vui lòng đăng nhập để tiếp tục
+            path: /api/v1/maintenance-requests
+            timestamp: '2026-09-04T08:00:00Z'
+            errors: {}
+
+    AccessForbidden:
+      description: Tài khoản không có role MANAGER; bao gồm tài khoản chỉ có role ADMIN.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          example:
+            code: AUTH_FORBIDDEN
+            message: Bạn không có quyền truy cập
+            path: /api/v1/maintenance-requests
+            timestamp: '2026-09-04T08:00:00Z'
+            errors: {}
+
+    RoomOrManagerNotFound:
+      description: Không tìm thấy phòng vật lý hoặc tài khoản Manager từ access token.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          examples:
+            roomNotFound:
+              value:
+                code: ROOM_NOT_FOUND
+                message: Không tìm thấy phòng
+                path: /api/v1/maintenance-requests
+                timestamp: '2026-09-04T08:00:00Z'
+                errors: {}
+            managerNotFound:
+              value:
+                code: USER_001
+                message: Không tìm thấy tài khoản quản lý đang đăng nhập
+                path: /api/v1/maintenance-requests
+                timestamp: '2026-09-04T08:00:00Z'
+                errors: {}
+
+    MaintenanceRequestNotFound:
+      description: Không tìm thấy yêu cầu bảo trì.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          example:
+            code: MAINTENANCE_REQUEST_NOT_FOUND
+            message: Không tìm thấy yêu cầu bảo trì
+            path: /api/v1/maintenance-requests/00000000-0000-0000-0000-000000000099
+            timestamp: '2026-09-04T08:00:00Z'
+            errors: {}
+
+    MaintenanceOrRoomNotFound:
+      description: Không tìm thấy yêu cầu bảo trì hoặc phòng gắn với yêu cầu.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          examples:
+            requestNotFound:
+              value:
+                code: MAINTENANCE_REQUEST_NOT_FOUND
+                message: Không tìm thấy yêu cầu bảo trì
+                path: /api/v1/maintenance-requests/00000000-0000-0000-0000-000000000099/status
+                timestamp: '2026-09-04T08:15:00Z'
+                errors: {}
+            roomNotFound:
+              value:
+                code: ROOM_NOT_FOUND
+                message: Không tìm thấy phòng của yêu cầu bảo trì
+                path: /api/v1/maintenance-requests/4c2ff15b-c288-4722-b4b8-8e73d3f55337/status
+                timestamp: '2026-09-04T08:15:00Z'
+                errors: {}
+
+    RoomMaintenanceStartConflict:
+      description: Phòng không ở trạng thái AVAILABLE nên không thể bắt đầu bảo trì.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          example:
+            code: ROOM_MAINTENANCE_START_CONFLICT
+            message: Không thể bắt đầu bảo trì khi phòng đang ở trạng thái OCCUPIED
+            path: /api/v1/maintenance-requests
+            timestamp: '2026-09-04T08:00:00Z'
+            errors: {}
+
+    UpdateStatusConflict:
+      description: Transition yêu cầu không hợp lệ hoặc trạng thái phòng không còn nhất quán.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          examples:
+            invalidTransition:
+              summary: Chuyển ngược từ COMPLETED về IN_PROGRESS
+              value:
+                code: MAINTENANCE_REQUEST_STATUS_CONFLICT
+                message: Không thể chuyển yêu cầu bảo trì từ COMPLETED sang IN_PROGRESS
+                path: /api/v1/maintenance-requests/4c2ff15b-c288-4722-b4b8-8e73d3f55337/status
+                timestamp: '2026-09-04T09:31:00Z'
+                errors: {}
+            skippedTransition:
+              summary: Bỏ qua IN_PROGRESS
+              value:
+                code: MAINTENANCE_REQUEST_STATUS_CONFLICT
+                message: Không thể chuyển yêu cầu bảo trì từ PENDING sang COMPLETED
+                path: /api/v1/maintenance-requests/4c2ff15b-c288-4722-b4b8-8e73d3f55337/status
+                timestamp: '2026-09-04T08:01:00Z'
+                errors: {}
+            roomStateConflict:
+              summary: Hoàn tất khi phòng không còn ở MAINTENANCE
+              value:
+                code: ROOM_MAINTENANCE_END_CONFLICT
+                message: Không thể kết thúc bảo trì khi phòng đang ở trạng thái AVAILABLE
+                path: /api/v1/maintenance-requests/4c2ff15b-c288-4722-b4b8-8e73d3f55337/status
+                timestamp: '2026-09-04T09:30:00Z'
+                errors: {}
+
+    InternalServerError:
+      description: Lỗi hệ thống ngoài dự kiến; transaction ghi dữ liệu được rollback.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          example:
+            code: INTERNAL_SERVER_ERROR
+            message: Đã xảy ra lỗi không mong muốn
+            path: /api/v1/maintenance-requests
+            timestamp: '2026-09-04T08:00:00Z'
+            errors: {}

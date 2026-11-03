@@ -1,0 +1,46 @@
+name: Deployment CI
+
+on:
+  workflow_call:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - 'deploy/vps/**'
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/**'
+      - 'deploy/vps/**'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Lint GitHub Actions workflows
+        run: |
+          curl --fail --silent --show-error --location --retry 3 --max-time 60 \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz \
+            -o "$RUNNER_TEMP/actionlint.tar.gz"
+          printf '8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  %s/actionlint.tar.gz\n' "$RUNNER_TEMP" | sha256sum --check
+          tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
+          "$RUNNER_TEMP/actionlint" -color
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check deployment scripts and failure recovery
+        run: |
+          bash -n deploy/vps/deploy.sh deploy/vps/install-minio-console.sh
+          shellcheck deploy/vps/deploy.sh deploy/vps/install-minio-console.sh
+          python3 -m unittest discover -s deploy/vps/tests -v
+      - name: Validate Compose without production secrets
+        env:
+          POSTGRES_PASSWORD: ci-placeholder
+          MINIO_ACCESS_KEY: ci-placeholder
+          MINIO_SECRET_KEY: ci-placeholder
+          SEPAY_WEBHOOK_API_KEY: ci-placeholder
+        run: docker compose --env-file deploy/vps/.env.example -f deploy/vps/docker-compose.yml config --quiet

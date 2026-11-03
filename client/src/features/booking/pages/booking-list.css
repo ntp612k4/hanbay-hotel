@@ -1,0 +1,51 @@
+.booking-history-page {
+  width: min(1100px, 100%);
+  margin-inline: auto;
+  padding: 40px 24px;
+}
+
+.booking-history-page__heading {
+  margin-bottom: 24px;
+}
+
+.booking-history-page__heading .ant-typography {
+  margin: 0;
+}
+
+.booking-history-page__filters {
+  margin-bottom: 16px;
+}
+
+.booking-history-page__status {
+  width: min(280px, 100%);
+}
+
+.booking-history-page__list {
+  width: 100%;
+}
+
+.booking-history-page__thumbnail {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.booking-history-page__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  text-align: right;
+}
+
+@media (max-width: 575px) {
+  .booking-history-page {
+    padding: 24px 16px;
+  }
+
+  .booking-history-page__actions {
+    align-items: flex-start;
+    text-align: left;
+  }
+}

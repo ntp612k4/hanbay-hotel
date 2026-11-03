@@ -1,0 +1,268 @@
+openapi: 3.0.3
+
+info:
+  title: API lịch sử đặt phòng
+  version: 1.1.0
+  description: |
+    API MVP cho phép người dùng đã đăng nhập xem lịch sử đặt phòng của chính mình.
+    Không hỗ trợ tra cứu bằng email, số điện thoại hoặc OTP.
+
+servers:
+  - url: http://localhost:8080
+
+tags:
+  - name: Lịch sử đặt phòng
+    description: Xem lịch sử đặt phòng của tài khoản hiện tại
+
+paths:
+  /api/v1/bookings/my-bookings:
+    get:
+      tags: [Lịch sử đặt phòng]
+      summary: Xem lịch sử đặt phòng của tài khoản hiện tại
+      description: |
+        Yêu cầu access token hợp lệ. Backend lấy định danh người dùng từ
+        JWT/SecurityContext và chỉ trả booking thuộc tài khoản đó.
+
+        Client không được truyền userId, guestId, email hoặc số điện thoại.
+        Kết quả được sắp xếp theo thời điểm tạo giảm dần. Trạng thái thanh toán
+        lấy từ payment mới nhất của từng booking.
+      operationId: getMyBookingHistory
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Size"
+        - $ref: "#/components/parameters/BookingStatusFilter"
+      responses:
+        "200":
+          description: Lấy lịch sử đặt phòng thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingHistoryResponse"
+        "400":
+          $ref: "#/components/responses/ValidationFailed"
+        "401":
+          $ref: "#/components/responses/AuthenticationRequired"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token của tài khoản HANBAY
+
+  parameters:
+    Page:
+      name: page
+      in: query
+      description: Số trang, bắt đầu từ 0
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    Size:
+      name: size
+      in: query
+      description: Số booking trên một trang
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+    BookingStatusFilter:
+      name: status
+      in: query
+      required: false
+      description: Lọc theo trạng thái booking
+      schema:
+        $ref: "#/components/schemas/BookingStatus"
+
+  responses:
+    ValidationFailed:
+      description: Query parameter không hợp lệ
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiErrorResponse"
+          example:
+            code: VALIDATION_FAILED
+            message: Dữ liệu gửi lên không hợp lệ
+            path: /api/v1/bookings/my-bookings
+            timestamp: "2026-08-10T10:30:00Z"
+            errors:
+              size: Số phần tử mỗi trang phải từ 1 đến 100
+    AuthenticationRequired:
+      description: Thiếu hoặc sai access token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiErrorResponse"
+          example:
+            code: AUTH_UNAUTHORIZED
+            message: Bạn cần đăng nhập để xem lịch sử đặt phòng
+            path: /api/v1/bookings/my-bookings
+            timestamp: "2026-08-10T10:30:00Z"
+            errors: {}
+
+  schemas:
+    BookingHistoryResponse:
+      type: object
+      required: [success, message, data, timestamp]
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Lấy lịch sử đặt phòng thành công
+        data:
+          $ref: "#/components/schemas/BookingHistoryPage"
+        timestamp:
+          type: string
+          format: date-time
+
+    BookingHistoryPage:
+      type: object
+      required: [content, page, size, totalElements, totalPages, first, last]
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/BookingHistoryItem"
+        page:
+          type: integer
+          minimum: 0
+        size:
+          type: integer
+          minimum: 1
+        totalElements:
+          type: integer
+          format: int64
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+        first:
+          type: boolean
+          description: Trang hiện tại là trang đầu tiên
+        last:
+          type: boolean
+          description: Trang hiện tại là trang cuối cùng
+
+    BookingHistoryItem:
+      type: object
+      additionalProperties: false
+      required:
+        - bookingId
+        - bookingCode
+        - roomType
+        - checkInDate
+        - checkOutDate
+        - adultCount
+        - childCount
+        - totalNights
+        - totalAmount
+        - currency
+        - bookingStatus
+        - createdAt
+      properties:
+        bookingId:
+          type: string
+          format: uuid
+        bookingCode:
+          type: string
+          maxLength: 50
+        roomType:
+          $ref: "#/components/schemas/BookingRoomTypeSummary"
+        checkInDate:
+          type: string
+          format: date
+        checkOutDate:
+          type: string
+          format: date
+        adultCount:
+          type: integer
+          minimum: 1
+        childCount:
+          type: integer
+          minimum: 0
+        totalNights:
+          type: integer
+          minimum: 1
+        totalAmount:
+          type: number
+          format: decimal
+          minimum: 0
+          multipleOf: 0.01
+          description: Tổng tiền VND; implementation dùng BigDecimal
+        currency:
+          type: string
+          enum: [VND]
+        bookingStatus:
+          $ref: "#/components/schemas/BookingStatus"
+        paymentId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Payment mới nhất; dùng để mở lại trang thanh toán khi còn PENDING.
+        paymentStatus:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/PaymentStatus"
+          description: Trạng thái tổng quát; null nếu booking chưa có payment
+        createdAt:
+          type: string
+          format: date-time
+
+    BookingRoomTypeSummary:
+      type: object
+      additionalProperties: false
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        thumbnailUrl:
+          type: string
+          format: uri
+          nullable: true
+
+    BookingStatus:
+      type: string
+      enum: [PENDING, CONFIRMED, CANCELLED, CHECKED_IN, CHECKED_OUT, EXPIRED]
+
+    PaymentStatus:
+      type: string
+      enum:
+        [
+          PENDING,
+          SUCCESS,
+          FAILED,
+          CANCELLED,
+          REFUNDED,
+          EXPIRED,
+          PARTIALLY_REFUNDED,
+        ]
+
+    ApiErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [code, message, path, timestamp, errors]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        errors:
+          type: object
+          additionalProperties:
+            type: string

@@ -1,0 +1,36 @@
+@startuml
+!include ../common/style.puml
+
+title HANBAY HOTEL - Guest Check-out Activity Diagram
+
+|Receptionist|
+start
+:Search checked-in booking;
+
+|System|
+:Load booking, room, payment
+and add-on details;
+if (Booking status = CHECKED_IN?) then (Yes)
+else (No)
+  :Reject invalid booking state;
+  stop
+endif
+
+:Calculate outstanding balance;
+if (Outstanding balance > 0?) then (Yes)
+  :Keep booking CHECKED_IN;
+  :Reject checkout and explain outstanding balance;
+  stop
+endif
+
+:Begin transaction;
+:Lock booking and assigned room;
+:Update booking status to CHECKED_OUT;
+:Update physical room status to DIRTY;
+:Append booking status history;
+:Commit transaction;
+
+|Receptionist|
+:View checkout confirmation;
+stop
+@enduml

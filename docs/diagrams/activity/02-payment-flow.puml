@@ -1,0 +1,73 @@
+@startuml
+!include ../common/style.puml
+
+title HANBAY HOTEL - Payment Flow Activity Diagram
+
+|Guest|
+start
+:Open pending booking;
+:Choose payment method;
+:Request payment;
+
+|System|
+:Validate booking ownership and status;
+if (Booking is payable?) then (Yes)
+  :Create Payment with status PENDING;
+  :Generate unique transaction reference;
+  :Send payment creation request;
+else (No)
+  :Reject payment request;
+  stop
+endif
+
+|Payment Gateway|
+:Create payment session;
+:Return payment URL or payment data;
+
+|System|
+:Store gateway reference;
+:Return payment information;
+
+|Guest|
+:Complete or cancel payment;
+
+|Payment Gateway|
+if (Payment completed?) then (Success)
+  :Send success webhook;
+else (Failed/Cancelled)
+  :Send failure webhook
+or allow session to expire;
+endif
+
+|System|
+:Authenticate and validate webhook;
+:Check gateway event/transaction idempotency;
+if (Webhook already processed?) then (Yes)
+  :Return successful acknowledgement;
+  stop
+else (No)
+  :Persist webhook event;
+endif
+
+if (Gateway result successful?) then (Yes)
+  :Begin transaction;
+  :Lock payment and booking;
+  if (Booking still PENDING
+and not expired?) then (Yes)
+    :Mark Payment SUCCESS;
+    :Mark Booking CONFIRMED;
+    :Append booking status history;
+    :Commit transaction;
+    :Send booking confirmation notification;
+  else (No)
+    :Record late payment exception;
+    :Mark payment for reconciliation/refund;
+    :Commit transaction;
+  endif
+else (No)
+  :Mark Payment FAILED;
+  :Keep booking PENDING until deadline;
+endif
+
+stop
+@enduml

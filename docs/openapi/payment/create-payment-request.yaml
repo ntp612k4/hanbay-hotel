@@ -1,0 +1,244 @@
+openapi: 3.0.3
+
+info:
+  title: API tạo yêu cầu thanh toán
+  version: 1.0.0
+  description: >
+    Đặc tả tạo yêu cầu thanh toán cho đặt phòng đang ở trạng thái PENDING.
+    API phục vụ cả khách vãng lai sau khi đã nhập thông tin liên hệ khi tạo đặt phòng.
+
+servers:
+  - url: http://localhost:8080
+
+paths:
+  /api/v1/payments/requests:
+    post:
+      tags:
+        - Thanh toán
+      summary: Tạo yêu cầu thanh toán cho đặt phòng đang chờ
+      description: >
+        Tạo hoặc trả lại yêu cầu thanh toán PENDING còn hiệu lực cho một đặt phòng đang giữ phòng.
+        Khách chưa đăng nhập phải gửi mã truy cập đặt phòng qua header X-Booking-Access-Token.
+        API không nhận số tiền từ client và chỉ webhook hợp lệ mới xác nhận đặt phòng.
+      operationId: createPaymentRequest
+      security: []
+      parameters:
+        - in: header
+          name: X-Booking-Access-Token
+          required: false
+          description: Bắt buộc với đặt phòng của khách chưa đăng nhập.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentRequest'
+            example:
+              bookingId: 8a1f6e4c-5b3a-4d9d-9e3d-4c8a3a9a1001
+      responses:
+        '201':
+          description: Tạo yêu cầu thanh toán thành công hoặc trả lại payment PENDING còn hiệu lực.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatePaymentRequestResponse'
+              example:
+                success: true
+                message: Tạo yêu cầu thanh toán thành công
+                data:
+                  paymentId: 0c34c243-94b5-4ff5-a0d4-5cd6fa4e0a91
+                  bookingId: 8a1f6e4c-5b3a-4d9d-9e3d-4c8a3a9a1001
+                  bookingCode: BKG-000001
+                  transactionRef: PAY-20260810-000001
+                  amount: 2450000
+                  currency: VND
+                  status: PENDING
+                  paymentUrl: https://qr.sepay.vn/img?acc=0000000000&bank=TESTBANK&amount=2450000&des=PAY-20260810-000001&template=compact&download=false&showinfo=true
+                  expiredAt: '2026-08-10T08:15:00Z'
+                  bankCode: TESTBANK
+                  accountNumber: '0000000000'
+                  accountName: HANBAY HOTEL DEV
+                  transferContent: PAY-20260810-000001
+                timestamp: '2026-08-10T08:00:00Z'
+        '400':
+          description: Request khong hop le.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              example:
+                code: VALIDATION_FAILED
+                message: Du lieu gui len khong hop le
+                path: /api/v1/payments/requests
+                timestamp: '2026-08-10T08:00:00Z'
+                errors:
+                  bookingId: bookingId khong duoc de trong
+        '404':
+          description: Không tìm thấy đặt phòng hoặc mã truy cập không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              example:
+                code: PAYMENT_BOOKING_NOT_FOUND
+                message: Không tìm thấy đặt phòng
+                path: /api/v1/payments/requests
+                timestamp: '2026-08-10T08:00:00Z'
+                errors: {}
+        '409':
+          description: Booking khong con thanh toan duoc hoac da thanh toan thanh cong.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                bookingNotPayable:
+                  summary: Booking het han hoac sai trang thai
+                  value:
+                    code: PAYMENT_BOOKING_NOT_PAYABLE
+                    message: Booking khong con o trang thai cho thanh toan
+                    path: /api/v1/payments/requests
+                    timestamp: '2026-08-10T08:00:00Z'
+                    errors: {}
+                alreadyCompleted:
+                  summary: Booking da co payment thanh cong
+                  value:
+                    code: PAYMENT_ALREADY_COMPLETED
+                    message: Booking da duoc thanh toan thanh cong
+                    path: /api/v1/payments/requests
+                    timestamp: '2026-08-10T08:00:00Z'
+                    errors: {}
+        '500':
+          description: Loi noi bo hoac khong tao duoc payment URL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+
+components:
+  schemas:
+    CreatePaymentRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - bookingId
+      properties:
+        bookingId:
+          type: string
+          format: uuid
+          description: ID của đặt phòng PENDING cần thanh toán.
+
+    CreatePaymentRequestResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+        - timestamp
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Tạo yêu cầu thanh toán thành công
+        data:
+          $ref: '#/components/schemas/PaymentRequestSummary'
+        timestamp:
+          type: string
+          format: date-time
+
+    PaymentRequestSummary:
+      type: object
+      required:
+        - paymentId
+        - bookingId
+        - bookingCode
+        - transactionRef
+        - amount
+        - currency
+        - status
+        - paymentUrl
+        - expiredAt
+        - bankCode
+        - accountNumber
+        - accountName
+        - transferContent
+      properties:
+        paymentId:
+          type: string
+          format: uuid
+        bookingId:
+          type: string
+          format: uuid
+        bookingCode:
+          type: string
+          description: Ma booking hien cho guest trong booking/payment flow.
+          example: BKG-000001
+        transactionRef:
+          type: string
+          description: Ma giao dich duy nhat dung de khop payment/webhook.
+          example: PAY-20260810-000001
+        amount:
+          type: integer
+          format: int64
+          minimum: 1
+          description: So tien can thanh toan, lay tu booking.totalAmount, don vi VND.
+        currency:
+          type: string
+          enum:
+            - VND
+        status:
+          type: string
+          enum:
+            - PENDING
+          description: Create payment request chi tra ve status PENDING.
+        paymentUrl:
+          type: string
+          format: uri
+          description: URL QR SePay/VietQR de guest quet va chuyen khoan.
+        expiredAt:
+          type: string
+          format: date-time
+          description: Thoi diem payment request het hieu luc, khong duoc vuot qua han giu booking.
+        bankCode:
+          type: string
+          description: Ma ngan hang nhan tien dung de hien thi/chuyen khoan thu cong.
+          example: TESTBANK
+        accountNumber:
+          type: string
+          description: So tai khoan nhan tien.
+          example: '0000000000'
+        accountName:
+          type: string
+          description: Ten chu tai khoan nhan tien.
+          example: HANBAY HOTEL DEV
+        transferContent:
+          type: string
+          description: Noi dung chuyen khoan dung de khop payment/webhook.
+          example: PAY-20260810-000001
+
+    ApiErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+        - path
+        - timestamp
+        - errors
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        errors:
+          type: object
+          additionalProperties:
+            type: string

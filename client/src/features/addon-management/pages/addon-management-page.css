@@ -1,0 +1,30 @@
+.addon-management-page {
+  width: 100%;
+}
+
+.addon-management-page h2 {
+  margin-top: 0;
+  margin-bottom: 4px;
+}
+
+.addon-management-toolbar {
+  margin-bottom: 20px;
+}
+
+.addon-management-toolbar .ant-input-search {
+  width: min(100%, 360px);
+}
+
+.addon-management-toolbar .ant-select {
+  min-width: 190px;
+}
+
+.addon-management-page .ant-pagination {
+  margin-top: 20px;
+}
+
+@media (max-width: 576px) {
+  .addon-management-toolbar > * {
+    width: 100%;
+  }
+}

@@ -1,0 +1,117 @@
+.housekeeping-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.housekeeping-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.housekeeping-page__header .ant-typography {
+  margin-bottom: 4px;
+}
+
+.housekeeping-page__eyebrow {
+  color: #c2410c;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.housekeeping-page__metric {
+  height: 100%;
+  overflow: hidden;
+  border-color: #e2e8f0;
+  box-shadow: 0 8px 24px rgb(15 23 42 / 5%);
+}
+
+.housekeeping-page__metric::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background: #94a3b8;
+  content: '';
+}
+
+.housekeeping-page__metric--primary::before {
+  background: #f97316;
+}
+
+.housekeeping-page__metric--primary .ant-statistic-content {
+  color: #c2410c;
+}
+
+.housekeeping-page__metric .ant-statistic-content {
+  font-size: clamp(24px, 3vw, 32px);
+}
+
+.housekeeping-page__metric .ant-statistic-content-suffix {
+  margin-left: 8px;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.housekeeping-page__list-card {
+  overflow: hidden;
+  border-color: #e2e8f0;
+  box-shadow: 0 12px 32px rgb(15 23 42 / 6%);
+}
+
+.housekeeping-page__list-card > .ant-card-head {
+  min-height: 64px;
+  border-bottom-color: #e2e8f0;
+}
+
+.housekeeping-page__room-number {
+  color: #0f172a;
+  font-size: 17px;
+}
+
+.housekeeping-page__status-tag {
+  width: fit-content;
+  margin-inline-end: 0;
+}
+
+.housekeeping-page__feedback {
+  margin-bottom: 16px;
+}
+
+.housekeeping-page__table-row:hover > td {
+  background: #fff7ed !important;
+}
+
+.housekeeping-page .ant-table-thead > tr > th {
+  background: #f1f5f9;
+  color: #334155;
+  font-weight: 700;
+}
+
+.housekeeping-page .ant-table-cell .ant-typography {
+  margin-bottom: 0;
+}
+
+@media (max-width: 576px) {
+  .housekeeping-page__header {
+    flex-direction: column;
+  }
+
+  .housekeeping-page__header > .ant-btn {
+    width: 100%;
+  }
+
+  .housekeeping-page__list-card > .ant-card-head {
+    align-items: flex-start;
+    padding-block: 12px;
+  }
+
+  .housekeeping-page__list-card .ant-card-extra {
+    margin-inline-start: 0;
+  }
+}

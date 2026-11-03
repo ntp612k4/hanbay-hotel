@@ -1,0 +1,53 @@
+.room-types-page {
+  min-height: 100vh;
+}
+
+.room-types-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr);
+  min-height: 500px;
+}
+
+.room-types-hero__content {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  justify-content: center;
+  width: min(100%, 640px);
+  padding: clamp(48px, 7vw, 100px) clamp(24px, 6vw, 96px);
+}
+
+.room-types-hero__content h1 {
+  font-size: clamp(38px, 5vw, 64px);
+  line-height: 1.08;
+}
+
+.room-types-hero__kicker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.room-types-hero__image {
+  min-height: 500px;
+  background:
+    linear-gradient(90deg, rgb(15 23 42 / 12%), transparent 45%),
+    url('https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1600&q=88')
+      center / cover;
+}
+
+@media (max-width: 900px) {
+  .room-types-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .room-types-hero__content {
+    width: min(calc(100% - 32px), 720px);
+    margin-inline: auto;
+    padding-inline: 0;
+  }
+
+  .room-types-hero__image {
+    min-height: 360px;
+  }
+}

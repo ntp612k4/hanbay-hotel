@@ -1,0 +1,19 @@
+@baseUrl = http://localhost:8080/api/v1
+### Chạy booking.http request 1-2 trước để có paymentId và bookingAccessToken.
+@accessToken = replace-with-user-access-token
+
+### Guest tra cứu kết quả bằng booking access token
+GET {{baseUrl}}/payments/{{paymentId}}/status
+X-Booking-Access-Token: {{bookingAccessToken}}
+
+### Chủ booking đã đăng nhập tra cứu bằng JWT
+GET {{baseUrl}}/payments/{{paymentId}}/status
+Authorization: Bearer {{accessToken}}
+
+### Payment ID sai định dạng phải trả 400 VALIDATION_FAILED
+GET {{baseUrl}}/payments/not-a-uuid/status
+X-Booking-Access-Token: {{bookingAccessToken}}
+
+### Token không hợp lệ phải trả 404 và không tiết lộ payment
+GET {{baseUrl}}/payments/{{paymentId}}/status
+X-Booking-Access-Token: invalid-booking-access-token

@@ -1,0 +1,105 @@
+openapi: 3.0.3
+info:
+  title: API hủy đặt phòng HANBAY
+  version: 1.0.0
+paths:
+  /api/v1/bookings/{bookingCode}/cancellation:
+    get:
+      tags: [Đặt phòng]
+      summary: Kiểm tra chính sách hủy đặt phòng
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BookingCode'
+      responses:
+        '200':
+          description: Trả về khả năng hủy và số tiền dự kiến hoàn
+        '401':
+          description: Người dùng chưa đăng nhập
+        '404':
+          description: Không tìm thấy đặt phòng thuộc người dùng
+  /api/v1/bookings/{bookingCode}/cancel:
+    post:
+      tags: [Đặt phòng]
+      summary: Hủy đặt phòng theo chính sách
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BookingCode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        '200':
+          description: Hủy đặt phòng thành công
+        '401':
+          description: Người dùng chưa đăng nhập
+        '404':
+          description: Không tìm thấy đặt phòng thuộc người dùng
+        '409':
+          description: Trạng thái hoặc thời hạn không cho phép hủy
+  /api/v1/payment-monitoring/refunds:
+    get:
+      tags: [Hoàn tiền]
+      summary: Lấy yêu cầu hoàn tiền đang chờ
+      description: Chỉ Manager được truy cập.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Danh sách yêu cầu hoàn tiền
+        '403':
+          description: Người dùng không có vai trò Manager
+  /api/v1/payment-monitoring/refunds/{refundId}/confirm:
+    post:
+      tags: [Hoàn tiền]
+      summary: Xác nhận đã hoàn tiền
+      description: Manager xác nhận giao dịch ngân hàng; số tiền do backend quyết định và không thể sửa.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: refundId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bankReference]
+              properties:
+                bankReference:
+                  type: string
+                  maxLength: 120
+      responses:
+        '200':
+          description: Xác nhận hoàn tiền thành công
+        '403':
+          description: Người dùng không có vai trò Manager
+        '409':
+          description: Yêu cầu hoàn tiền đã được xử lý
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    BookingCode:
+      name: bookingCode
+      in: path
+      required: true
+      schema:
+        type: string
+        example: BK20260812000001

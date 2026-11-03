@@ -1,0 +1,58 @@
+@startuml
+!include ../common/style.puml
+
+title HANBAY HOTEL - Physical Room State Machine
+
+hide empty description
+
+[*] --> AVAILABLE : room activated
+
+state AVAILABLE
+state OCCUPIED
+state DIRTY
+state MAINTENANCE
+
+AVAILABLE --> OCCUPIED : guest checks in\n[valid assignment]
+OCCUPIED --> DIRTY : guest checks out
+DIRTY --> AVAILABLE : cleaning completed\n[inspection passed]
+
+AVAILABLE --> MAINTENANCE : manager blocks room
+DIRTY --> MAINTENANCE : issue found during cleaning
+OCCUPIED --> MAINTENANCE : emergency incident\n[guest relocated]
+
+MAINTENANCE --> DIRTY : repair completed\n[cleaning required]
+MAINTENANCE --> AVAILABLE : repair and inspection completed\n[room already clean]
+
+AVAILABLE --> [*] : room deactivated
+MAINTENANCE --> [*] : room permanently retired
+
+note right of AVAILABLE
+  The room can be assigned at check-in.
+
+  This status alone does not determine
+  date-range availability for booking.
+end note
+
+note right of OCCUPIED
+  A checked-in booking currently uses
+  this physical room.
+end note
+
+note right of DIRTY
+  The room cannot be assigned until
+  housekeeping completes cleaning.
+end note
+
+note right of MAINTENANCE
+  The room is blocked from assignment
+  and excluded from operational inventory.
+end note
+
+legend bottom
+  == Important distinction ==
+  Room.status models the current operational condition of a physical room.
+  Booking availability is calculated from room inventory minus overlapping
+  PENDING, CONFIRMED and CHECKED_IN bookings for the requested date range.
+endlegend
+
+@enduml

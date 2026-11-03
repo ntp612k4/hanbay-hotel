@@ -1,0 +1,304 @@
+openapi: 3.0.3
+info:
+  title: API trạng thái thanh toán HANBAY Hotel
+  version: 1.0.0
+  description: API tra cứu kết quả thanh toán cho trang kết quả thanh toán HAN-33.
+
+servers:
+  - url: http://localhost:8080
+    description: Môi trường phát triển cục bộ
+
+tags:
+  - name: Thanh toán
+    description: Các thao tác thanh toán
+
+paths:
+  /api/v1/payments/{paymentId}/status:
+    get:
+      tags:
+        - Thanh toán
+      summary: Tra cứu kết quả thanh toán
+      operationId: getPaymentStatus
+      description: |
+        Trả về trạng thái mới nhất của thanh toán và booking liên quan.
+
+        Người dùng được phép truy cập khi là chủ booking đã đăng nhập hoặc cung cấp
+        booking access token hợp lệ. Hai trường hợp không tìm thấy payment và không có
+        quyền truy cập đều trả về `404` nhằm hạn chế dò tìm dữ liệu thanh toán.
+      security:
+        - bearerAuth: []
+        - bookingAccessToken: []
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          description: UUID của payment cần tra cứu.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Lấy trạng thái thanh toán thành công.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentStatusApiResponse"
+              examples:
+                success:
+                  summary: Thanh toán thành công
+                  value:
+                    success: true
+                    message: Lấy trạng thái thanh toán thành công
+                    data:
+                      paymentId: 0c34c243-94b5-4ff5-a0d4-5cd6fa4e0a91
+                      bookingId: 8a1f6e4c-5b3a-4d9d-9e3d-4c8a3a9a1001
+                      bookingCode: BK20260814000201
+                      transactionRef: PAY-20260814070244-E02D78616064F1D9FA5F7DD96F876D
+                      paymentStatus: SUCCESS
+                      bookingStatus: CONFIRMED
+                      amount: 2450000
+                      paidAmount: 2450000
+                      currency: VND
+                      refundStatus: null
+                      refundAmount: null
+                      refundReason: null
+                      paymentUrl: https://qr.sepay.vn/img?acc=0000000002&bank=Vietcombank&amount=2450000
+                      bankCode: Vietcombank
+                      accountNumber: "0000000002"
+                      accountName: HANBAY HOTEL
+                      transferContent: PAY20260814070244E02D78616064F1D9FA5F7DD96F876D
+                      expiredAt: "2026-08-14T07:17:00Z"
+                      paidAt: "2026-08-14T07:05:30Z"
+                    timestamp: "2026-08-14T07:05:31Z"
+                pending:
+                  summary: Đang chờ thanh toán
+                  value:
+                    success: true
+                    message: Lấy trạng thái thanh toán thành công
+                    data:
+                      paymentId: 0c34c243-94b5-4ff5-a0d4-5cd6fa4e0a91
+                      bookingId: 8a1f6e4c-5b3a-4d9d-9e3d-4c8a3a9a1001
+                      bookingCode: BK20260814000201
+                      transactionRef: PAY-20260814070244-E02D78616064F1D9FA5F7DD96F876D
+                      paymentStatus: PENDING
+                      bookingStatus: PENDING
+                      amount: 2450000
+                      paidAmount: 0
+                      currency: VND
+                      refundStatus: null
+                      refundAmount: null
+                      refundReason: null
+                      paymentUrl: https://qr.sepay.vn/img?acc=0000000002&bank=Vietcombank&amount=2450000
+                      bankCode: Vietcombank
+                      accountNumber: "0000000002"
+                      accountName: HANBAY HOTEL
+                      transferContent: PAY20260814070244E02D78616064F1D9FA5F7DD96F876D
+                      expiredAt: "2026-08-14T07:17:00Z"
+                      paidAt: null
+                    timestamp: "2026-08-14T07:10:00Z"
+        "400":
+          description: Payment ID không đúng định dạng UUID.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "404":
+          description: Không tìm thấy payment hoặc người gọi không có quyền truy cập.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+              example:
+                code: PAYMENT_BOOKING_NOT_FOUND
+                message: Không tìm thấy thông tin thanh toán
+                path: /api/v1/payments/0c34c243-94b5-4ff5-a0d4-5cd6fa4e0a91/status
+                timestamp: "2026-08-14T07:10:00Z"
+                errors: {}
+        "429":
+          description: Vượt quá giới hạn 120 request mỗi phút trên một địa chỉ IP.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "500":
+          description: Lỗi hệ thống ngoài dự kiến.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token của người dùng sở hữu booking.
+    bookingAccessToken:
+      type: apiKey
+      in: header
+      name: X-Booking-Access-Token
+      description: Token truy cập booking dành cho guest.
+
+  schemas:
+    PaymentStatusApiResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+        - timestamp
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Lấy trạng thái thanh toán thành công
+        data:
+          $ref: "#/components/schemas/PaymentResultSummary"
+        timestamp:
+          type: string
+          format: date-time
+
+    PaymentResultSummary:
+      type: object
+      required:
+        - paymentId
+        - bookingId
+        - bookingCode
+        - transactionRef
+        - paymentStatus
+        - bookingStatus
+        - amount
+        - paidAmount
+        - currency
+        - paymentUrl
+        - bankCode
+        - accountNumber
+        - accountName
+        - transferContent
+        - expiredAt
+      properties:
+        paymentId:
+          type: string
+          format: uuid
+        bookingId:
+          type: string
+          format: uuid
+        bookingCode:
+          type: string
+          description: Mã booking hiển thị cho khách hàng.
+          example: BK20260814000201
+        transactionRef:
+          type: string
+          description: Mã tham chiếu dùng để đối soát giao dịch.
+          example: PAY-20260814070244-E02D78616064F1D9FA5F7DD96F876D
+        paymentStatus:
+          $ref: "#/components/schemas/PaymentStatus"
+        bookingStatus:
+          $ref: "#/components/schemas/BookingStatus"
+        amount:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Số tiền phải thanh toán theo đơn vị tiền tệ nhỏ nhất đang áp dụng.
+          example: 2450000
+        paidAmount:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Tổng số tiền đã được hệ thống ghi nhận.
+          example: 2450000
+        currency:
+          type: string
+          description: Mã tiền tệ ISO 4217.
+          example: VND
+        refundStatus:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/PaymentRefundStatus"
+          description: Trạng thái refund cần ưu tiên hiển thị; null nếu payment chưa có refund.
+        refundAmount:
+          type: number
+          format: decimal
+          nullable: true
+          minimum: 0
+          description: Số tiền của refund đang được ưu tiên hiển thị.
+        refundReason:
+          type: string
+          nullable: true
+          description: Lý do hoàn tiền dành cho người dùng.
+        paymentUrl:
+          type: string
+          format: uri
+          description: QR hiện tại để người dùng quay lại tiếp tục thanh toán.
+        bankCode:
+          type: string
+        accountNumber:
+          type: string
+        accountName:
+          type: string
+        transferContent:
+          type: string
+          description: Nội dung chuyển khoản gắn với payment.
+        expiredAt:
+          type: string
+          format: date-time
+          description: Thời điểm hết hạn thanh toán.
+        paidAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Thời điểm thanh toán thành công; null khi chưa thanh toán.
+
+    PaymentStatus:
+      type: string
+      enum:
+        - PENDING
+        - SUCCESS
+        - FAILED
+        - CANCELLED
+        - EXPIRED
+        - REFUNDED
+        - PARTIALLY_REFUNDED
+      description: |
+        `PENDING`: đang chờ chuyển khoản.
+        `SUCCESS`: thanh toán thành công.
+        `FAILED`: thanh toán thất bại.
+        `CANCELLED`: yêu cầu thanh toán đã bị hủy hoặc thay thế.
+        `EXPIRED`: đã hết thời hạn thanh toán.
+        `REFUNDED`: đã hoàn toàn bộ tiền.
+        `PARTIALLY_REFUNDED`: đã hoàn một phần tiền.
+
+    BookingStatus:
+      type: string
+      description: Trạng thái booking hiện tại do backend trả về.
+      enum: [PENDING, CONFIRMED, CANCELLED, CHECKED_IN, CHECKED_OUT, EXPIRED]
+
+    PaymentRefundStatus:
+      type: string
+      enum: [PENDING, PROCESSING, SUCCESS, FAILED, CANCELLED]
+
+    ApiErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+        - path
+        - timestamp
+        - errors
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        errors:
+          type: object
+          additionalProperties:
+            type: string

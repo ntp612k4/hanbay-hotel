@@ -1,0 +1,26 @@
+@baseUrl = http://localhost:8080/api/v1
+@activeRoomTypeId = 10000000-0000-0000-0000-000000000001
+
+### Tìm trang đầu tiên của các loại phòng còn trống
+GET {{baseUrl}}/room-types/available?checkIn=2027-08-12&checkOut=2027-08-15&adults=2&children=0&page=0&size=6
+Accept: application/json
+
+### Tìm trang tiếp theo của các loại phòng còn trống
+GET {{baseUrl}}/room-types/available?checkIn=2027-08-12&checkOut=2027-08-15&adults=2&children=0&page=1&size=6
+Accept: application/json
+
+### Phân trang không hợp lệ - trả về 400
+GET {{baseUrl}}/room-types/available?checkIn=2027-08-12&checkOut=2027-08-15&adults=2&children=0&page=-1&size=101
+Accept: application/json
+
+### Lấy chi tiết loại phòng đang kinh doanh
+GET {{baseUrl}}/room-types/{{activeRoomTypeId}}
+Accept: application/json
+
+### UUID không đúng định dạng - trả về 400
+GET {{baseUrl}}/room-types/not-a-uuid
+Accept: application/json
+
+### Loại phòng không tồn tại hoặc ngừng kinh doanh - trả về 404
+GET {{baseUrl}}/room-types/99999999-9999-4999-8999-999999999999
+Accept: application/json

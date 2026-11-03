@@ -1,0 +1,56 @@
+@startuml
+!include ../common/style.puml
+
+title HANBAY HOTEL - Search Available Rooms Activity Diagram
+
+|Guest|
+start
+:Enter check-in date;
+:Enter check-out date;
+:Enter adults and children;
+:Submit search;
+
+|System|
+:Validate date range and occupancy;
+if (Input valid?) then (Yes)
+else (No)
+  :Return field validation errors;
+  stop
+endif
+
+:Load active room types
+matching guest capacity;
+if (Matching room types exist?) then (Yes)
+else (No)
+  :Return empty result;
+  stop
+endif
+
+repeat
+  :Select next room type;
+  :Count active physical rooms;
+  :Count overlapping bookings with statuses:
+PENDING not expired, CONFIRMED, CHECKED_IN;
+  :Calculate available quantity;
+  if (Available quantity > 0?) then (Yes)
+    :Loop through each night of stay;
+    :Load applicable price rate;
+    :Apply base price, surcharge
+or discount;
+    :Calculate estimated total price;
+    :Add room type to result;
+  endif
+repeat while (More room types?) is (Yes)
+
+:Sort/filter result as requested;
+:Return available room types,
+quantity and estimated prices;
+
+|Guest|
+if (Any result?) then (Yes)
+  :Review result and room details;
+else (No)
+  :Change dates or guest count;
+endif
+stop
+@enduml

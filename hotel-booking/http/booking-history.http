@@ -1,0 +1,51 @@
+@baseUrl = http://localhost:8080/api/v1
+@identifier = customer@example.com
+@password = replace-with-local-customer-password
+
+### Đăng nhập bằng tài khoản khách hàng
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "{{identifier}}",
+  "password": "{{password}}"
+}
+
+> {%
+    client.global.set("accessToken", response.body.data.accessToken);
+%}
+
+### Xem trang đầu tiên của lịch sử đặt phòng
+GET {{baseUrl}}/bookings/my-bookings?page=0&size=10
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+### Lọc lịch sử theo trạng thái đã xác nhận
+GET {{baseUrl}}/bookings/my-bookings?page=0&size=10&status=CONFIRMED
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+### Kiểm tra trang tiếp theo
+GET {{baseUrl}}/bookings/my-bookings?page=1&size=5
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+### Lỗi 401 - không gửi access token
+GET {{baseUrl}}/bookings/my-bookings?page=0&size=10
+Accept: application/json
+
+### Lỗi 400 - page không hợp lệ
+GET {{baseUrl}}/bookings/my-bookings?page=-1&size=10
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+### Lỗi 400 - size vượt giới hạn 100
+GET {{baseUrl}}/bookings/my-bookings?page=0&size=101
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+### Lỗi 400 - trạng thái không tồn tại
+GET {{baseUrl}}/bookings/my-bookings?page=0&size=10&status=UNKNOWN
+Authorization: Bearer {{accessToken}}
+Accept: application/json

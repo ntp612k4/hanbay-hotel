@@ -1,0 +1,79 @@
+.room-detail-shell {
+  min-height: 100vh;
+}
+
+.room-detail-page {
+  width: min(1200px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 40px 0 64px;
+  flex: 1;
+}
+
+.room-detail-lead {
+  max-width: 760px;
+  font-size: 17px;
+}
+
+.room-gallery {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: repeat(2, 220px);
+  gap: 12px;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.room-gallery .ant-image {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.room-gallery .ant-image:first-child {
+  grid-row: 1 / 3;
+}
+
+.room-gallery .ant-image:first-child:last-child {
+  grid-column: 1 / -1;
+}
+
+.room-gallery img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.booking-card {
+  position: sticky;
+  top: 24px;
+}
+
+.amenity-icon {
+  color: #1677ff;
+}
+
+.room-gallery-skeleton.ant-skeleton-element,
+.room-gallery-skeleton .ant-skeleton-image {
+  width: 100%;
+  height: 440px;
+}
+
+@media (max-width: 767px) {
+  .room-detail-page {
+    width: min(100% - 24px, 1200px);
+    padding: 24px 0 40px;
+  }
+
+  .room-gallery {
+    grid-template-columns: 1fr;
+    grid-template-rows: 280px;
+  }
+
+  .room-gallery .ant-image:not(:first-child) {
+    display: none;
+  }
+
+  .booking-card {
+    position: static;
+  }
+}

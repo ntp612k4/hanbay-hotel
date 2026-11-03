@@ -1,0 +1,101 @@
+@startuml
+!include ../common/style.puml
+
+title HANBAY HOTEL - Room Inventory and Pricing Domain
+left to right direction
+hide methods
+
+class RoomType <<aggregate root>> {
+  +UUID id
+  +String code
+  +String name
+  +String description
+  +int capacityAdults
+  +int capacityChildren
+  +BigDecimal basePrice
+  +boolean active
+}
+
+class Room <<entity>> {
+  +UUID id
+  +String roomNumber
+  +int floor
+  +RoomStatus status
+  +boolean maintenance
+}
+
+class RoomAmenity <<entity>> {
+  +UUID id
+  +String name
+  +String description
+}
+
+class RoomTypeAmenity <<association entity>> {
+  +UUID roomTypeId
+  +UUID amenityId
+}
+
+class RoomImage <<entity>> {
+  +UUID id
+  +String objectKey
+  +String altText
+  +int displayOrder
+}
+
+class PriceRate <<entity>> {
+  +UUID id
+  +LocalDate startDate
+  +LocalDate endDate
+  +DayOfWeek dayOfWeek
+  +AdjustmentType adjustmentType
+  +BigDecimal adjustmentValue
+  +int priority
+}
+
+class AddOnService <<entity>> {
+  +UUID id
+  +String name
+  +BigDecimal price
+  +PricingUnit pricingUnit
+  +boolean active
+}
+
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  DIRTY
+  MAINTENANCE
+}
+
+enum AdjustmentType {
+  FIXED
+  SURCHARGE
+  DISCOUNT
+}
+
+enum PricingUnit {
+  PER_BOOKING
+  PER_NIGHT
+  PER_GUEST
+}
+
+RoomType "1" *-- "1..*" Room
+RoomType "1" *-- "0..*" RoomImage
+RoomType "1" *-- "0..*" PriceRate
+RoomType "1" *-- "0..*" RoomTypeAmenity
+RoomAmenity "1" *-- "0..*" RoomTypeAmenity
+Room --> RoomStatus
+PriceRate --> AdjustmentType
+AddOnService --> PricingUnit
+
+note bottom of RoomType
+  Availability is calculated by date overlap,
+  not only by the current Room.status value.
+end note
+
+note bottom of PriceRate
+  Applied per stay night according to
+  date range, weekday and priority.
+end note
+
+@enduml

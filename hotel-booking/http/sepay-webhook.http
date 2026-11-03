@@ -1,0 +1,265 @@
+### Fallback kỹ thuật cho U018 - ưu tiên demo happy path bằng UI HANBAY + SePay Test Mode.
+### Chạy booking.http request 1-2 trước để có paymentCode/paymentAmount trong global variables.
+### Giá trị mặc định dưới đây khớp application-local.yml; nếu dùng env thật phải thay tương ứng.
+
+@baseUrl = http://localhost:8080/api/v1
+@webhookApiKey = local-dev-webhook-key
+@accountNumber = 0000000000
+@gateway = TESTBANK
+@eventId = 987654321
+@referenceCode = DEMO-U018-987654321
+
+### Dữ liệu riêng cho các scenario - không dùng chung payment đã SUCCESS.
+@partialPaymentCode = replace-with-active-pending-payment-code
+@partialPaymentAmount = 100000
+@overpaymentCode = replace-with-another-active-pending-payment-code
+@overpaymentAmount = 2000000
+@latePaymentCode = replace-with-expired-cancelled-or-failed-payment-code
+@latePaymentAmount = 100000
+
+### 1. Happy path fallback - nhận đủ tiền, booking còn hạn
+### Kỳ vọng: 200 ACK; event PROCESSED; payment SUCCESS; booking CONFIRMED.
+POST {{baseUrl}}/payments/sepay/webhook
+Authorization: Apikey {{webhookApiKey}}
+Content-Type: application/json
+
+{
+  "id": {{eventId}},
+  "gateway": "{{gateway}}",
+  "transactionDate": "2026-08-17 09:30:00",
+  "accountNumber": "{{accountNumber}}",
+  "subAccount": null,
+  "code": null,
+  "content": "{{paymentCode}}",
+  "transferType": "in",
+  "transferAmount": {{paymentAmount}},
+  "accumulated": {{paymentAmount}},
+  "description": "Thanh toán {{paymentCode}}",
+  "referenceCode": "{{referenceCode}}"
+}
+
+> {%
+    client.test("Webhook hợp lệ được ACK", function () {
+        client.assert(response.status === 200, "Expected HTTP 200");
+        client.assert(response.body.success === true, "Expected success=true");
+    });
+%}
+
+### 2. Duplicate retry - gửi lại chính xác event/payload request 1
+### Kỳ vọng: vẫn 200; không tạo thêm webhook event/transaction; paid amount không tăng lần hai.
+POST {{baseUrl}}/payments/sepay/webhook
+Authorization: Apikey {{webhookApiKey}}
+Content-Type: application/json
+
+{
+  "id": {{eventId}},
+  "gateway": "{{gateway}}",
+  "transactionDate": "2026-08-17 09:30:00",
+  "accountNumber": "{{accountNumber}}",
+  "subAccount": null,
+  "code": null,
+  "content": "{{paymentCode}}",
+  "transferType": "in",
+  "transferAmount": {{paymentAmount}},
+  "accumulated": {{paymentAmount}},
+  "description": "Thanh toán {{paymentCode}}",
+  "referenceCode": "{{referenceCode}}"
+}
+
+### 3. Partial payment - dùng payment PENDING riêng
+### Kỳ vọng: ghi transaction; payment/booking vẫn PENDING cho đến khi tổng nhận đủ.
+POST {{baseUrl}}/payments/sepay/webhook
+Authorization: Apikey {{webhookApiKey}}
+Content-Type: application/json
+
+{
+  "id": 987654331,
+  "gateway": "{{gateway}}",
+  "transactionDate": "2026-08-17 09:31:00",
+  "accountNumber": "{{accountNumber}}",
+  "content": "{{partialPaymentCode}}",
+  "transferType": "in",
+  "transferAmount": {{partialPaymentAmount}},
+  "accumulated": {{partialPaymentAmount}},
+  "description": "Thanh toán một phần {{partialPaymentCode}}",
+  "referenceCode": "DEMO-PARTIAL-987654331"
+}
+
+### 4. Overpayment - amount phải lớn hơn tổng tiền của payment riêng này
+### Kỳ vọng: payment SUCCESS; booking CONFIRMED; refund PENDING cho phần thừa.
+POST {{baseUrl}}/payments/sepay/webhook
+Authorization: Apikey {{webhookApiKey}}
+Content-Type: application/json
+
+{
+  "id": 987654332,
+  "gateway": "{{gateway}}",
+  "transactionDate": "2026-08-17 09:32:00",
+  "accountNumber": "{{accountNumber}}",
+  "content": "{{overpaymentCode}}",
+  "transferType": "in",
+  "transferAmount": {{overpaymentAmount}},
+  "accumulated": {{overpaymentAmount}},
+  "description": "Thanh toán thừa {{overpaymentCode}}",
+  "referenceCode": "DEMO-OVERPAY-987654332"
+}
+
+### 5. Late payment/partial late payment - payment đã EXPIRED/CANCELLED/FAILED
+### Kỳ vọng: booking không CONFIRMED; ghi đúng tiền nhận; refund PENDING đúng latePaymentAmount.
+POST {{baseUrl}}/payments/sepay/webhook
+Authorization: Apikey {{webhookApiKey}}
+Content-Type: application/json
+
+{
+  "id": 987654333,
+  "gateway": "{{gateway}}",
+  "transactionDate": "2026-08-17 09:33:00",
+  "accountNumber": "{{accountNumber}}",
+  "content": "{{latePaymentCode}}",
+  "transferType": "in",
+  "transferAmount": {{latePaymentAmount}},
+  "accumulated": {{latePaymentAmount}},
+  "description": "Thanh toán đến muộn {{latePaymentCode}}",
+  "referenceCode": "DEMO-LATE-987654333"
+}
+
+### 6. Transfer out - event được IGNORED
+POST {{baseUrl}}/payments/sepay/webhook
+Authorization: Apikey {{webhookApiKey}}
+Content-Type: application/json
+
+{
+  "id": 987654334,
+  "gateway": "{{gateway}}",
+  "transactionDate": "2026-08-17 09:34:00",
+  "accountNumber": "{{accountNumber}}",
+  "content": "{{paymentCode}}",
+  "transferType": "out",
+  "transferAmount": 100000,
+  "accumulated": 0,
+  "description": "Giao dịch tiền ra",
+  "referenceCode": "DEMO-OUT-987654334"
+}
+
+### 7. Sai tài khoản nhận - event được IGNORED
+POST {{baseUrl}}/payments/sepay/webhook
+Authorization: Apikey {{webhookApiKey}}
+Content-Type: application/json
+
+{
+  "id": 987654335,
+  "gateway": "{{gateway}}",
+  "transactionDate": "2026-08-17 09:35:00",
+  "accountNumber": "9999999999",
+  "content": "{{paymentCode}}",
+  "transferType": "in",
+  "transferAmount": 100000,
+  "accumulated": 100000,
+  "description": "Sai tài khoản nhận",
+  "referenceCode": "DEMO-WRONG-ACCOUNT-987654335"
+}
+
+### 8. Không có payment code - event được IGNORED
+POST {{baseUrl}}/payments/sepay/webhook
+Authorization: Apikey {{webhookApiKey}}
+Content-Type: application/json
+
+{
+  "id": 987654336,
+  "gateway": "{{gateway}}",
+  "transactionDate": "2026-08-17 09:36:00",
+  "accountNumber": "{{accountNumber}}",
+  "content": "NO PAYMENT CODE",
+  "transferType": "in",
+  "transferAmount": 100000,
+  "accumulated": 100000,
+  "description": "Không có mã thanh toán",
+  "referenceCode": "DEMO-NO-CODE-987654336"
+}
+
+### 9. Payment code đúng format nhưng không tồn tại - event được IGNORED
+POST {{baseUrl}}/payments/sepay/webhook
+Authorization: Apikey {{webhookApiKey}}
+Content-Type: application/json
+
+{
+  "id": 987654337,
+  "gateway": "{{gateway}}",
+  "transactionDate": "2026-08-17 09:37:00",
+  "accountNumber": "{{accountNumber}}",
+  "content": "PAY-20260817093700-00000000000000000000000000000000",
+  "transferType": "in",
+  "transferAmount": 100000,
+  "accumulated": 100000,
+  "description": "Mã không tồn tại",
+  "referenceCode": "DEMO-UNKNOWN-CODE-987654337"
+}
+
+### 10. API key sai - 401 INVALID_WEBHOOK_API_KEY
+POST {{baseUrl}}/payments/sepay/webhook
+Authorization: Apikey wrong-key
+Content-Type: application/json
+
+{
+  "id": 987654338,
+  "gateway": "{{gateway}}",
+  "transactionDate": "2026-08-17 09:38:00",
+  "accountNumber": "{{accountNumber}}",
+  "content": "{{paymentCode}}",
+  "transferType": "in",
+  "transferAmount": 100000,
+  "accumulated": 100000,
+  "referenceCode": "DEMO-WRONG-KEY-987654338"
+}
+
+### 11. Thiếu Authorization - 401 INVALID_WEBHOOK_API_KEY
+POST {{baseUrl}}/payments/sepay/webhook
+Content-Type: application/json
+
+{
+  "id": 987654339,
+  "gateway": "{{gateway}}",
+  "transactionDate": "2026-08-17 09:39:00",
+  "accountNumber": "{{accountNumber}}",
+  "content": "{{paymentCode}}",
+  "transferType": "in",
+  "transferAmount": 100000,
+  "accumulated": 100000,
+  "referenceCode": "DEMO-NO-KEY-987654339"
+}
+
+### 12. Payload rỗng - 400 VALIDATION_FAILED/MALFORMED_REQUEST
+POST {{baseUrl}}/payments/sepay/webhook
+Authorization: Apikey {{webhookApiKey}}
+Content-Type: application/json
+
+{}
+
+### 13. Enum transferType sai - 400 MALFORMED_REQUEST
+POST {{baseUrl}}/payments/sepay/webhook
+Authorization: Apikey {{webhookApiKey}}
+Content-Type: application/json
+
+{
+  "id": 987654340,
+  "gateway": "{{gateway}}",
+  "transactionDate": "2026-08-17 09:40:00",
+  "accountNumber": "{{accountNumber}}",
+  "content": "{{paymentCode}}",
+  "transferType": "incoming",
+  "transferAmount": 100000,
+  "accumulated": 100000,
+  "referenceCode": "DEMO-BAD-ENUM-987654340"
+}
+
+### 14. Monitoring summary - MANAGER hoặc ADMIN
+@monitoringAccessToken = replace-with-manager-or-admin-access-token
+GET {{baseUrl}}/payment-monitoring/summary
+Authorization: Bearer {{monitoringAccessToken}}
+
+### 15. Tìm webhook theo event ID - MANAGER hoặc ADMIN
+GET {{baseUrl}}/payment-monitoring/webhook-events?page=0&size=10&keyword={{eventId}}
+Authorization: Bearer {{monitoringAccessToken}}
+
+### 16. Anonymous monitoring - 401
+GET {{baseUrl}}/payment-monitoring/summary

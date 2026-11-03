@@ -1,0 +1,60 @@
+@startuml
+!include ../common/style.puml
+
+title HANBAY HOTEL - Manager Use Case Diagram
+left to right direction
+
+actor Manager
+
+rectangle "HANBAY HOTEL - HOTEL MANAGEMENT" {
+    usecase "Login" as UC_Login
+
+    package "Room Type Management" {
+        usecase "Manage Room Types" as UC_ManageRoomTypes
+        usecase "Create Room Type" as UC_CreateRoomType
+        usecase "Update Room Type" as UC_UpdateRoomType
+        usecase "Delete Room Type" as UC_DeleteRoomType
+    }
+
+    package "Physical Room Management" {
+        usecase "Manage Physical Rooms" as UC_ManageRooms
+        usecase "Create Physical Room" as UC_CreateRoom
+        usecase "Update Physical Room" as UC_UpdateRoom
+        usecase "Set Maintenance Status" as UC_SetMaintenance
+    }
+
+    package "Pricing Management" {
+        usecase "Manage Pricing Rules" as UC_ManagePricing
+        usecase "Set Base Price" as UC_SetBasePrice
+        usecase "Set Weekend Surcharge" as UC_WeekendPrice
+        usecase "Set Holiday Price" as UC_HolidayPrice
+    }
+
+    package "Operational Reporting" {
+        usecase "View Reports" as UC_ViewReports
+        usecase "View Revenue Report" as UC_RevenueReport
+        usecase "View Occupancy Report" as UC_OccupancyReport
+        usecase "View Booking Report" as UC_BookingReport
+    }
+}
+
+Manager --> UC_Login
+Manager --> UC_ManageRoomTypes
+Manager --> UC_ManageRooms
+Manager --> UC_ManagePricing
+Manager --> UC_ViewReports
+
+UC_ManageRoomTypes ..> UC_CreateRoomType : <<include>>
+UC_ManageRoomTypes ..> UC_UpdateRoomType : <<include>>
+UC_ManageRoomTypes ..> UC_DeleteRoomType : <<include>>
+UC_ManageRooms ..> UC_CreateRoom : <<include>>
+UC_ManageRooms ..> UC_UpdateRoom : <<include>>
+UC_ManageRooms ..> UC_SetMaintenance : <<include>>
+UC_ManagePricing ..> UC_SetBasePrice : <<include>>
+UC_ManagePricing ..> UC_WeekendPrice : <<include>>
+UC_ManagePricing ..> UC_HolidayPrice : <<include>>
+UC_ViewReports ..> UC_RevenueReport : <<include>>
+UC_ViewReports ..> UC_OccupancyReport : <<include>>
+UC_ViewReports ..> UC_BookingReport : <<include>>
+
+@enduml

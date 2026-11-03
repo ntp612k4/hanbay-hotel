@@ -1,0 +1,68 @@
+.main-header {
+  position: sticky;
+  z-index: 40;
+  top: 0;
+  backdrop-filter: blur(24px) saturate(1.25);
+  border-bottom-color: #d8dee9 !important;
+  box-shadow:
+    0 1px 0 rgba(15, 23, 42, 0.08),
+    0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.main-header__nav {
+  flex: 1;
+  max-width: 700px;
+}
+
+.main-footer .main-footer__brand,
+.main-footer .main-footer__title {
+  margin-block: 0 16px;
+  color: #ffffff;
+}
+
+.main-footer .main-footer__brand {
+  margin-bottom: 0;
+}
+
+.main-footer .main-footer__description {
+  max-width: 440px;
+  margin: 0;
+  color: #cbd5e1;
+}
+
+.main-footer .main-footer__text {
+  color: #cbd5e1;
+}
+
+.main-footer .main-footer__link {
+  color: #e0f2fe;
+  text-decoration: none;
+}
+
+.main-footer .main-footer__link:hover,
+.main-footer .main-footer__link:focus-visible {
+  color: #7dd3fc;
+  text-decoration: underline;
+}
+
+.main-header__account-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+  padding: 4px 8px;
+}
+
+.main-header__account-menu .ant-dropdown-menu-item,
+.main-header__account-menu .ant-dropdown-menu-item a {
+  padding: 8px 12px;
+}
+
+.main-header__account-menu .ant-dropdown-menu-item[aria-disabled='true'] {
+  background: transparent;
+  cursor: default;
+}
+
+.main-header__account-menu .ant-dropdown-menu-item + .ant-dropdown-menu-item-divider {
+  margin: 6px 0;
+}

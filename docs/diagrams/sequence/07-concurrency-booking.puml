@@ -1,0 +1,68 @@
+@startuml
+!include ../common/style.puml
+
+title HANBAY HOTEL - Concurrent Booking Prevention
+
+autonumber
+
+actor "Guest A" as GuestA
+actor "Guest B" as GuestB
+boundary "Booking API A" as APIA
+boundary "Booking API B" as APIB
+control "Booking Service A" as ServiceA
+control "Booking Service B" as ServiceB
+database "Room Type Repository" as RoomTypeRepo
+database "Booking Repository" as BookingRepo
+database "PostgreSQL" as DB
+
+par Guest A creates booking
+    GuestA -> APIA: POST /bookings
+    APIA -> ServiceA: createBooking()
+and Guest B creates booking
+    GuestB -> APIB: POST /bookings
+    APIB -> ServiceB: createBooking()
+end
+
+ServiceA -> RoomTypeRepo: findByIdForUpdate(roomTypeId)
+RoomTypeRepo -> DB: SELECT room_type FOR UPDATE
+DB --> RoomTypeRepo: Lock acquired by transaction A
+RoomTypeRepo --> ServiceA: Locked room type
+
+ServiceB -> RoomTypeRepo: findByIdForUpdate(roomTypeId)
+RoomTypeRepo -> DB: SELECT room_type FOR UPDATE
+
+note right of DB
+Transaction B waits until
+transaction A releases the lock.
+end note
+
+ServiceA -> BookingRepo: countOverlappingBookings()
+BookingRepo -> DB: Count active overlapping bookings
+DB --> BookingRepo: 0 occupied
+BookingRepo --> ServiceA: 1 room available
+
+ServiceA -> BookingRepo: Save PENDING booking A
+BookingRepo -> DB: INSERT booking A
+DB --> BookingRepo: Success
+ServiceA -> DB: COMMIT and release lock
+ServiceA --> APIA: Booking created
+APIA --> GuestA: 201 Created
+
+DB --> RoomTypeRepo: Transaction B acquires lock
+RoomTypeRepo --> ServiceB: Locked room type
+
+ServiceB -> BookingRepo: countOverlappingBookings()
+BookingRepo -> DB: Count active overlapping bookings
+DB --> BookingRepo: 1 occupied
+BookingRepo --> ServiceB: 0 rooms available
+
+ServiceB -> ServiceB: Roll back transaction
+ServiceB --> APIB: BOOKING_001
+APIB --> GuestB: 409 Conflict
+
+note over ServiceA, DB
+The availability re-check must happen after acquiring
+the lock and inside the booking transaction.
+end note
+
+@enduml

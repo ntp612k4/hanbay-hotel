@@ -1,0 +1,30 @@
+.price-rule-management-page {
+  width: 100%;
+}
+
+.price-rule-management-page h2 {
+  margin-top: 0;
+  margin-bottom: 4px;
+}
+
+.price-rule-management-toolbar {
+  margin-bottom: 20px;
+}
+
+.price-rule-management-toolbar .ant-input-search {
+  width: min(100%, 340px);
+}
+
+.price-rule-management-toolbar .ant-select {
+  min-width: 180px;
+}
+
+.price-rule-management-page .ant-pagination {
+  margin-top: 20px;
+}
+
+@media (max-width: 576px) {
+  .price-rule-management-toolbar > * {
+    width: 100%;
+  }
+}

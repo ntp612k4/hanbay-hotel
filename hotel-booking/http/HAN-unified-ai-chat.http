@@ -1,0 +1,21 @@
+### Unified policy question over SSE
+POST http://localhost:8080/api/v1/ai/chat/stream
+Authorization: Bearer {{accessToken}}
+Accept: text/event-stream
+Content-Type: application/json
+
+{
+  "conversationId": "11111111-1111-4111-8111-111111111111",
+  "message": "Khách sạn có chính sách hủy phòng như thế nào?"
+}
+
+### Unified booking tool question over SSE
+POST http://localhost:8080/api/v1/ai/chat/stream
+Authorization: Bearer {{accessToken}}
+Accept: text/event-stream
+Content-Type: application/json
+
+{
+  "conversationId": "11111111-1111-4111-8111-111111111111",
+  "message": "Cho tôi xem các booking của mình"
+}

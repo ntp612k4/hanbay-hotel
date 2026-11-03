@@ -1,0 +1,139 @@
+spring:
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+  data:
+    redis:
+      repositories:
+        enabled: false
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      connect-timeout: 2s
+      timeout: 2s
+  mail:
+    host: smtp.resend.com
+    port: 587
+    username: resend
+    password: ${RESEND_API_KEY:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
+      - org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration
+  config:
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:../.env[.properties]
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: GMT+7
+  docker:
+    compose:
+      file: ../docker-compose.yml
+  application:
+    name: hotel-management
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  ai:
+    model:
+      chat: ${AI_CHAT_MODEL:openai}
+      embedding: ${AI_EMBEDDING_MODEL:none}
+    openai:
+      chat:
+        model: ${OPENAI_MODEL:gpt-4.1-mini}
+        temperature: ${OPENAI_TEMPERATURE:0.2}
+      embedding:
+        model: ${OPENAI_EMBEDDING_MODEL:text-embedding-3-small}
+        dimensions: ${OPENAI_EMBEDDING_DIMENSIONS:1536}
+    vectorstore:
+      pgvector:
+        initialize-schema: false
+        schema-validation: true
+        schema-name: public
+        table-name: policy_vector_store
+        id-type: text
+        index-type: hnsw
+        distance-type: cosine-distance
+        dimensions: ${OPENAI_EMBEDDING_DIMENSIONS:1536}
+server:
+  # Tomcat accepts forwarding headers only from the explicitly trusted proxy.
+  forward-headers-strategy: native
+  tomcat:
+    remoteip:
+      internal-proxies: '${TRUSTED_PROXY_REGEX:127[.]0[.]0[.]1|::1}'
+      remote-ip-header: X-Forwarded-For
+      protocol-header: X-Forwarded-Proto
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui
+  api-docs:
+    path: /v3/api-docs
+  packages-to-scan: com.tpanh.hotel
+
+api:
+  prefix: /api/v1
+
+booking:
+  expiration:
+    cron: ${BOOKING_EXPIRATION_CRON:0 * * * * *}
+  cancellation:
+    check-in-time: ${BOOKING_CHECK_IN_TIME:14:00}
+    hotel-zone: ${HOTEL_TIME_ZONE:Asia/Ho_Chi_Minh}
+    full-refund-hours: ${BOOKING_FULL_REFUND_HOURS:48}
+    partial-refund-hours: ${BOOKING_PARTIAL_REFUND_HOURS:24}
+    partial-refund-percent: ${BOOKING_PARTIAL_REFUND_PERCENT:50}
+
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  default-admin:
+    enabled: ${ADMIN_DEFAULT_ENABLED:false}
+    email: ${ADMIN_DEFAULT_EMAIL}
+    phone: ${ADMIN_DEFAULT_PHONE}
+    full-name: ${ADMIN_DEFAULT_FULL_NAME}
+    password: ${ADMIN_DEFAULT_PASSWORD}
+
+auth:
+  login:
+    ip-limit: ${LOGIN_IP_RATE_LIMIT:30}
+    ip-window-seconds: ${LOGIN_IP_RATE_WINDOW_SECONDS:60}
+    account-failure-limit: ${LOGIN_ACCOUNT_FAILURE_LIMIT:5}
+    account-window-seconds: ${LOGIN_ACCOUNT_RATE_WINDOW_SECONDS:900}
+  password-reset:
+    expiration-minutes: ${PASSWORD_RESET_EXPIRATION_MINUTES:15}
+    frontend-url: ${PASSWORD_RESET_FRONTEND_URL:http://localhost:5173/reset-password}
+    from-address: ${MAIL_FROM:onboarding@resend.dev}
+    support-email: ${SUPPORT_EMAIL:support@hanbay-hotel.local}
+    rate-limit-window-seconds: ${PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS:60}
+    forgot-rate-limit: ${PASSWORD_RESET_FORGOT_RATE_LIMIT:5}
+    verify-rate-limit: ${PASSWORD_RESET_VERIFY_RATE_LIMIT:20}
+    submit-rate-limit: ${PASSWORD_RESET_SUBMIT_RATE_LIMIT:10}
+    retention-days: ${PASSWORD_RESET_RETENTION_DAYS:7}
+
+ai:
+  policy-rag:
+    rag-enabled: ${AI_POLICY_RAG_ENABLED:false}
+    top-k: ${AI_POLICY_TOP_K:3}
+    similarity-threshold: ${AI_POLICY_SIMILARITY_THRESHOLD:0.18}
+    rate-limit-per-minute: ${AI_POLICY_RATE_LIMIT_PER_MINUTE:10}
+    embedding-dimensions: ${OPENAI_EMBEDDING_DIMENSIONS:1536}
+
+storage:
+  minio:
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    access-key: ${MINIO_ACCESS_KEY:local-minio}
+    secret-key: ${MINIO_SECRET_KEY:local-minio-password}
+    bucket: ${MINIO_BUCKET:hotel-images}

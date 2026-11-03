@@ -1,0 +1,88 @@
+@baseUrl = http://localhost:8080/api/v1
+@identifier = housekeeper.test@hanbay.local
+@password = replace-with-local-housekeeper-password
+@receptionistToken = replace-with-receptionist-jwt
+
+### 1. Đăng nhập tài khoản Housekeeper
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "{{identifier}}",
+  "password": "{{password}}"
+}
+
+> {%
+    client.global.set("housekeeperToken", response.body.data.accessToken);
+%}
+
+### 2. Housekeeper xem trang đầu danh sách phòng cần dọn - kỳ vọng 200
+GET {{baseUrl}}/housekeeping/dirty-rooms?page=0&size=20
+Authorization: Bearer {{housekeeperToken}}
+Accept: application/json
+
+### 3. Kiểm tra phân trang tùy chỉnh - kỳ vọng 200
+GET {{baseUrl}}/housekeeping/dirty-rooms?page=1&size=5
+Authorization: Bearer {{housekeeperToken}}
+Accept: application/json
+
+### 4. Thiếu access token - kỳ vọng 401 AUTH_UNAUTHORIZED
+GET {{baseUrl}}/housekeeping/dirty-rooms?page=0&size=20
+Accept: application/json
+
+### 5. Receptionist không có quyền - kỳ vọng 403 AUTH_FORBIDDEN
+GET {{baseUrl}}/housekeeping/dirty-rooms?page=0&size=20
+Authorization: Bearer {{receptionistToken}}
+Accept: application/json
+
+### 6. Page âm - kỳ vọng 400 VALIDATION_FAILED
+GET {{baseUrl}}/housekeeping/dirty-rooms?page=-1&size=20
+Authorization: Bearer {{housekeeperToken}}
+Accept: application/json
+
+### 7. Size bằng 0 - kỳ vọng 400 VALIDATION_FAILED
+GET {{baseUrl}}/housekeeping/dirty-rooms?page=0&size=0
+Authorization: Bearer {{housekeeperToken}}
+Accept: application/json
+
+### 8. Size vượt giới hạn - kỳ vọng 400 VALIDATION_FAILED
+GET {{baseUrl}}/housekeeping/dirty-rooms?page=0&size=101
+Authorization: Bearer {{housekeeperToken}}
+Accept: application/json
+
+### 9. Page sai kiểu - kỳ vọng 400 VALIDATION_FAILED
+GET {{baseUrl}}/housekeeping/dirty-rooms?page=abc&size=20
+Authorization: Bearer {{housekeeperToken}}
+Accept: application/json
+
+### 10. Hoàn tất dọn phòng - kỳ vọng 200 và data.status = AVAILABLE
+# Thay roomId bằng phòng hiện đang CLEANING.
+@cleaningRoomId = replace-with-cleaning-room-uuid
+PATCH {{baseUrl}}/housekeeping/rooms/{{cleaningRoomId}}/complete-cleaning
+Authorization: Bearer {{housekeeperToken}}
+Accept: application/json
+
+### 11. Hoàn tất lại phòng đã AVAILABLE - kỳ vọng 409 ROOM_CLEANING_COMPLETE_CONFLICT
+PATCH {{baseUrl}}/housekeeping/rooms/{{cleaningRoomId}}/complete-cleaning
+Authorization: Bearer {{housekeeperToken}}
+Accept: application/json
+
+### 12. Không có token khi hoàn tất dọn - kỳ vọng 401 AUTH_UNAUTHORIZED
+PATCH {{baseUrl}}/housekeeping/rooms/{{cleaningRoomId}}/complete-cleaning
+Accept: application/json
+
+### 13. Receptionist hoàn tất dọn - kỳ vọng 403 AUTH_FORBIDDEN
+PATCH {{baseUrl}}/housekeeping/rooms/{{cleaningRoomId}}/complete-cleaning
+Authorization: Bearer {{receptionistToken}}
+Accept: application/json
+
+### 14. Không tìm thấy phòng - kỳ vọng 404 ROOM_NOT_FOUND
+PATCH {{baseUrl}}/housekeeping/rooms/10000000-0000-0000-0000-000000000099/complete-cleaning
+Authorization: Bearer {{housekeeperToken}}
+Accept: application/json
+
+### 15. roomId sai định dạng - kỳ vọng 400 VALIDATION_FAILED
+PATCH {{baseUrl}}/housekeeping/rooms/not-a-uuid/complete-cleaning
+Authorization: Bearer {{housekeeperToken}}
+Accept: application/json

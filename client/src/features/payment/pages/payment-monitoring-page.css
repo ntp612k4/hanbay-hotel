@@ -1,0 +1,103 @@
+.payment-monitoring-page {
+  min-width: 0;
+}
+
+.payment-monitoring-page > .ant-row .ant-card,
+.payment-monitoring-page > .ant-card {
+  border-color: #cbd5e1;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+.payment-monitoring-page .ant-table-thead > tr > th {
+  border-bottom-color: #cbd5e1;
+  background: #eaf0f6;
+  color: #172033;
+}
+
+.payment-monitoring-page .ant-table-tbody > tr > td {
+  border-bottom-color: #e2e8f0;
+  background: #ffffff;
+}
+
+.payment-monitoring-page__header {
+  margin-bottom: 20px;
+}
+
+.payment-monitoring-page__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.payment-monitoring-page__filters {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.payment-monitoring-page__search {
+  width: min(100%, 320px);
+}
+
+.payment-monitoring-page__table .ant-table-cell {
+  white-space: nowrap;
+}
+
+.payment-monitoring-page__code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.payment-monitoring-page__payload {
+  max-height: 360px;
+  margin: 0;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.payment-monitoring-drawer .ant-drawer-mask {
+  background: rgba(15, 23, 42, 0.48);
+}
+
+.payment-monitoring-drawer .ant-drawer-content,
+.payment-monitoring-drawer .ant-drawer-header,
+.payment-monitoring-drawer .ant-drawer-body {
+  background: #ffffff;
+}
+
+.payment-monitoring-drawer .ant-drawer-header {
+  border-bottom-color: #cbd5e1;
+}
+
+.payment-monitoring-drawer .ant-descriptions-bordered .ant-descriptions-item-label {
+  background: #eaf0f6;
+  color: #172033;
+  font-weight: 600;
+}
+
+.payment-monitoring-drawer .ant-descriptions-bordered .ant-descriptions-item-content {
+  background: #ffffff;
+  color: #111827;
+}
+
+.payment-monitoring-drawer .ant-descriptions-bordered,
+.payment-monitoring-drawer .ant-card {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+@media (max-width: 768px) {
+  .payment-monitoring-page__toolbar,
+  .payment-monitoring-page__filters {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .payment-monitoring-page__search {
+    width: 100%;
+  }
+}

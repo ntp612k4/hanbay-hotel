@@ -1,0 +1,65 @@
+name: Backend CI
+
+on:
+  workflow_call:
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - 'hotel-booking/**'
+      - 'docs/knowledge-base/**'
+      - '.github/workflows/**'
+      - 'deploy/vps/**'
+  push:
+    branches:
+      - develop
+    paths:
+      - 'hotel-booking/**'
+      - 'docs/knowledge-base/**'
+      - '.github/workflows/**'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    defaults:
+      run:
+        working-directory: hotel-booking
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: hotel_test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Verify project
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/hotel_test_db
+          SPRING_DATASOURCE_USERNAME: test_user
+          SPRING_DATASOURCE_PASSWORD: test_password
+        run: ./mvnw --batch-mode clean verify

@@ -1,0 +1,33 @@
+.today-arrivals-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.today-arrivals-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.today-arrivals-page__header .ant-typography {
+  margin-bottom: 4px;
+}
+
+.today-arrivals-page__summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.today-arrivals-page__feedback {
+  margin-bottom: 16px;
+}
+
+@media (max-width: 576px) {
+  .today-arrivals-page__header {
+    flex-direction: column;
+  }
+}

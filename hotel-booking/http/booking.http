@@ -1,0 +1,84 @@
+@baseUrl = http://localhost:8080/api/v1
+@roomTypeId = a1000000-0000-4000-8000-000000000001
+@checkInDate = 2027-08-18
+@checkOutDate = 2027-08-19
+
+### 1. Tạo booking PENDING hợp lệ
+
+POST {{baseUrl}}/bookings
+Content-Type: application/json
+
+{
+  "roomTypeId": "{{roomTypeId}}",
+  "checkInDate": "{{checkInDate}}",
+  "checkOutDate": "{{checkOutDate}}",
+  "adults": 2,
+  "children": 0,
+  "guestInfo": {
+    "fullName": "Nguyen Van A",
+    "email": "guest@gmail.com",
+    "phone": "0901234567",
+    "identityNumber": "012345678901"
+  },
+  "addOns": []
+}
+
+> {%
+    client.global.set("bookingId", response.body.data.bookingId);
+    client.global.set("bookingAccessToken", response.body.data.bookingAccessToken);
+%}
+
+### 2. Tạo yêu cầu thanh toán cho booking vừa tạo (fallback cho U015)
+POST {{baseUrl}}/payments/requests
+Content-Type: application/json
+X-Booking-Access-Token: {{bookingAccessToken}}
+
+{
+  "bookingId": "{{bookingId}}"
+}
+
+> {%
+    client.global.set("paymentId", response.body.data.paymentId);
+    client.global.set("paymentCode", response.body.data.transactionRef);
+    client.global.set("paymentAmount", response.body.data.amount);
+%}
+
+### 3. Theo dõi trạng thái thanh toán
+GET {{baseUrl}}/payments/{{paymentId}}/status
+X-Booking-Access-Token: {{bookingAccessToken}}
+
+### 4. Ngoại lệ - ngày trả không sau ngày nhận
+POST {{baseUrl}}/bookings
+Content-Type: application/json
+
+{
+  "roomTypeId": "{{roomTypeId}}",
+  "checkInDate": "{{checkInDate}}",
+  "checkOutDate": "{{checkInDate}}",
+  "adults": 2,
+  "children": 0,
+  "guestInfo": {
+    "fullName": "Nguyen Van A",
+    "email": "guest@gmail.com",
+    "identityNumber": "012345678901"
+  },
+  "addOns": []
+}
+
+### 5. Ngoại lệ - vượt sức chứa
+POST {{baseUrl}}/bookings
+Content-Type: application/json
+
+{
+  "roomTypeId": "{{roomTypeId}}",
+  "checkInDate": "{{checkInDate}}",
+  "checkOutDate": "{{checkOutDate}}",
+  "adults": 99,
+  "children": 99,
+  "guestInfo": {
+    "fullName": "Nguyen Van A",
+    "email": "guest@gmail.com",
+    "identityNumber": "012345678901"
+  },
+  "addOns": []
+}
