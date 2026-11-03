@@ -20,7 +20,7 @@ class HotelPolicySearchToolTest {
                                 "internal-id",
                                 "Chính sách nhận phòng",
                                 "CHECK_IN",
-                                "docs/knowledge-base/check-in-policy.md",
+                                "hotel-booking/src/main/resources/knowledge-base/check-in-policy.md",
                                 "Giờ nhận phòng",
                                 0,
                                 0.91))));

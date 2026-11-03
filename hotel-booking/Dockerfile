@@ -5,7 +5,6 @@ WORKDIR /workspace
 
 COPY hotel-booking/pom.xml hotel-booking/pom.xml
 COPY hotel-booking/src hotel-booking/src
-COPY docs/knowledge-base docs/knowledge-base
 
 WORKDIR /workspace/hotel-booking
 RUN --mount=type=cache,target=/root/.m2 \

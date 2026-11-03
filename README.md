@@ -53,8 +53,6 @@ incrementally through Jira tasks.
 hotel-booking-system/
 ├── client/                 # React and TypeScript frontend
 ├── hotel-booking/          # Spring Boot backend
-├── docs/                   # Project documentation
-├── docs/diagrams/          # PlantUML diagrams
 ├── .github/workflows/      # Frontend and backend CI
 └── README.md
 ```

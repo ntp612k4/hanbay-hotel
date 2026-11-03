@@ -9,7 +9,6 @@
 **/dist
 **/target
 **/.idea
-docs/knowledge-base/target
 
 **/.env
 **/.env.*

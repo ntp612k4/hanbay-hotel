@@ -16,7 +16,8 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 public final class PolicyKnowledgeBaseLoader {
 
     private static final String RESOURCE_PATTERN = "classpath*:knowledge-base/*.md";
-    private static final String LOCAL_DEVELOPMENT_RESOURCE_PATTERN = "file:../docs/knowledge-base/*-policy.md";
+    private static final String LOCAL_DEVELOPMENT_RESOURCE_PATTERN =
+            "file:src/main/resources/knowledge-base/*-policy.md";
     private static final List<String> REQUIRED_METADATA =
             List.of("documentId", "title", "category", "source", "version", "hotel", "language");
 

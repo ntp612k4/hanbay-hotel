@@ -26,7 +26,7 @@ class PolicyRetrieverTest {
                         "documentId", "HANBAY-CHECK-IN-POLICY",
                         "title", "Check-in Policy",
                         "category", "CHECK_IN",
-                        "source", "docs/knowledge-base/check-in-policy.md",
+                        "source", "hotel-booking/src/main/resources/knowledge-base/check-in-policy.md",
                         "section", "Thời điểm nhận phòng",
                         "chunkIndex", 0))
                 .score(0.91)

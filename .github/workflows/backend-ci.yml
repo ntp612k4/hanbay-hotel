@@ -8,7 +8,6 @@ on:
       - main
     paths:
       - 'hotel-booking/**'
-      - 'docs/knowledge-base/**'
       - '.github/workflows/**'
       - 'deploy/vps/**'
   push:
@@ -16,7 +15,6 @@ on:
       - develop
     paths:
       - 'hotel-booking/**'
-      - 'docs/knowledge-base/**'
       - '.github/workflows/**'
 
 permissions:

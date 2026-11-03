@@ -4,7 +4,7 @@ Smart Hotel Reservation & Property Management System (PMS).
 
 Hệ thống số hóa toàn bộ quy trình vận hành khách sạn: tìm phòng, đặt phòng trực tuyến, thanh toán, check-in/check-out, housekeeping, dynamic pricing và trợ lý AI.
 
-> Tài liệu chi tiết về nghiệp vụ, kiến trúc, database, API... xem tại thư mục [`/docs`](./docs).
+> Chính sách RAG nằm tại [`src/main/resources/knowledge-base`](src/main/resources/knowledge-base).
 
 ---
 
@@ -62,7 +62,6 @@ com.hanbay.hotel
 
 Mỗi module gồm: `controller`, `service`, `repository`, `entity`, `dto`, `mapper`, `exception`.
 
-Chi tiết quy ước đặt tên, REST convention, response format, exception handling: xem [`docs/12-coding-convention.md`](./docs/12-coding-convention.md).
 
 ---
 
@@ -140,7 +139,6 @@ Base URL của API:
 /api/v1
 ```
 
-Chi tiết đặc tả API: [`docs/06-api-specification.md`](./docs/06-api-specification.md)
 
 ---
 
@@ -171,7 +169,6 @@ Chạy đầy đủ pipeline giống CI trước khi tạo PR:
 ./mvnw --batch-mode clean verify
 ```
 
-Chiến lược test chi tiết (Unit / Integration / API / Coverage target): xem [`docs/11-testing-strategy.md`](./docs/11-testing-strategy.md).
 
 ---
 
@@ -184,7 +181,6 @@ Chiến lược test chi tiết (Unit / Integration / API / Coverage target): xe
 - **Dynamic Pricing**: tính giá theo từng đêm dựa trên lịch giá (cuối tuần, ngày lễ).
 - **AI Assistant**: hỗ trợ gợi ý hạng phòng và trả lời chính sách khách sạn (không tự tạo booking, không xử lý thanh toán).
 
-Chi tiết: [`docs/08-concurrency-design.md`](./docs/08-concurrency-design.md), [`docs/09-ai-integration.md`](./docs/09-ai-integration.md).
 
 ---
 
