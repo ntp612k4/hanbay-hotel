@@ -1,73 +1,52 @@
-# React + TypeScript + Vite
+# HANBAY HOTEL — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend React và TypeScript dùng Vite, React Router, TanStack Query,
+Ant Design, React Hook Form và Zod.
 
-Currently, two official plugins are available:
+## Chạy local
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Hướng dẫn khởi động Docker, backend và ngrok/SePay nằm trong
+[README chính](../README.md#chạy-demo-local-trên-windows).
 
-## React Compiler
+Yêu cầu Node.js `^20.19.0 || >=22.12.0` theo Vite đang dùng.
+Trong thư mục `client`, chuẩn bị cấu hình nếu chưa có:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+```powershell
+if (-not (Test-Path -LiteralPath '.env.local')) {
+    Copy-Item -LiteralPath '.env.example' -Destination '.env.local'
+}
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Nội dung cấu hình:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x';
-import reactDom from 'eslint-plugin-react-dom';
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+```dotenv
+VITE_API_BASE_URL=/api/v1
+VITE_APP_NAME=Hotel Management
 ```
+
+Cài dependencies lần đầu hoặc sau khi lockfile thay đổi:
+
+```powershell
+npm ci
+```
+
+Bật backend tại `http://localhost:8081`, rồi chạy frontend trong terminal riêng:
+
+```powershell
+npm run dev -- --port 5173 --strictPort
+```
+
+Mở `http://localhost:5173`. Vite proxy `/api` và `/actuator` sang backend
+`http://localhost:8081`; cấu hình ở `vite.config.ts`. Cổng `5173` phải trống.
+Giữ terminal mở trong lúc demo và dùng `Ctrl+C` để dừng.
+
+## Kiểm tra và build
+
+```powershell
+npm run test:run
+npm run lint
+npm run build
+```
+
+`npm run build` tạo thư mục `dist`; lệnh demo ở trên sử dụng Vite dev server.
+Thông tin truy cập MinIO, pgAdmin và webhook SePay xem README chính.

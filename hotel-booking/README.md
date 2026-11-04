@@ -48,8 +48,8 @@ Trên Windows, thay `./mvnw` bằng `mvnw.cmd`.
 ## 3. Cấu trúc package
 
 ```text
-com.hanbay.hotel
-├── auth
+com.tpanh.hotel
+├── authentication
 ├── user
 ├── room
 ├── booking
@@ -60,50 +60,36 @@ com.hanbay.hotel
 └── common
 ```
 
-Mỗi module gồm: `controller`, `service`, `repository`, `entity`, `dto`, `mapper`, `exception`.
+Các module tổ chức theo nghiệp vụ; tùy module có `controller`, `service`,
+`repository`, `domain`/`entity`, `dto`, `mapper` và `exception`.
 
 
 ---
 
-## 4. Chạy dự án
+## 4. Chạy backend để demo local
 
-### 4.1. Chạy bằng Docker Compose (khuyến nghị)
+Hướng dẫn cấu hình và chạy cả frontend, Docker, ngrok/SePay nằm ở
+[README chính](../README.md#chạy-demo-local-trên-windows).
 
-Dự án sử dụng Spring Boot Docker Compose support — Spring Boot tự động khởi tạo PostgreSQL và chạy Flyway migration khi ứng dụng khởi động, không cần chạy `docker compose up` thủ công.
+PostgreSQL, Redis, MinIO và pgAdmin chạy trong Docker. Bật chúng trước theo
+README chính; backend sử dụng lại database hiện có. Dừng backend khác đang giữ
+cổng `8081`, rồi chạy trong thư mục `hotel-booking`:
 
-```bash
-./mvnw spring-boot:run
+```powershell
+.\mvnw.cmd spring-boot:run `
+    "-Dspring-boot.run.profiles=local" `
+    "-Dspring-boot.run.arguments=--server.port=8081 --spring.docker.compose.enabled=false"
 ```
 
-Kiểm tra container:
+Cấu hình riêng nằm trong `src/main/resources/application-local.yml` và `.env`
+ở gốc repository; không commit hai file này. Profile local đã có trên máy sau
+khi sao chép cấu hình cũ. Nếu clone mới, làm bước cấu hình một lần trong README chính.
 
-```bash
-docker compose ps
-```
+Chờ log `Started HotelBookingApplication`. Backend dùng cổng `8081`; API có
+prefix `/api/v1`. `spring.docker.compose.enabled=false` ngăn Spring tự bật cả
+stack và tránh tranh chấp cổng với Maven/Vite đang chạy local.
 
-Dừng service:
-
-```bash
-docker compose down
-```
-
-### 4.2. Chạy local trỏ tới database có sẵn
-
-Thiết lập biến môi trường (qua IDE Run Configuration hoặc export trực tiếp):
-
-```env
-DB_URL=jdbc:postgresql://localhost:5432/hanbay_hotel
-DB_USERNAME=postgres
-DB_PASSWORD=postgres
-```
-
-Sau đó chạy:
-
-```bash
-./mvnw spring-boot:run
-```
-
-Ứng dụng mặc định chạy tại `http://localhost:8080`, health check tại `http://localhost:8080/actuator/health`.
+Dùng `Ctrl+C` để dừng backend; các dịch vụ Docker tiếp tục chạy và giữ dữ liệu.
 
 ---
 
@@ -130,7 +116,7 @@ V<yyyyMMddHHmm>__<description>.sql
 Sau khi chạy backend, truy cập Swagger UI:
 
 ```text
-http://localhost:8080/swagger-ui/index.html
+http://localhost:8081/swagger-ui/index.html
 ```
 
 Base URL của API:
@@ -186,27 +172,13 @@ Chạy đầy đủ pipeline giống CI trước khi tạo PR:
 
 ## 9. Đóng góp
 
-Vui lòng đọc [`CONTRIBUTING.md`](./CONTRIBUTING.md) trước khi tạo Pull Request — bao gồm quy ước branch, commit, Flyway migration và checklist review.
+Vui lòng đọc [`CONTRIBUTING.md`](../CONTRIBUTING.md) trước khi tạo Pull Request — bao gồm quy ước branch, commit, Flyway migration và checklist review.
 
 ---
 
 ## 10. Tài liệu liên quan
 
-| Tài liệu | Nội dung |
-|---|---|
-| `01-project-overview.md` | Tổng quan dự án |
-| `02-business-requirements.md` | Yêu cầu nghiệp vụ (BRD) |
-| `03-software-requirements.md` | Yêu cầu phần mềm (SRS) |
-| `04-system-architecture.md` | Kiến trúc hệ thống |
-| `05-database-design.md` | Thiết kế database |
-| `06-api-specification.md` | Đặc tả API |
-| `07-business-workflows.md` | Luồng nghiệp vụ |
-| `08-concurrency-design.md` | Thiết kế concurrency |
-| `09-ai-integration.md` | Tích hợp AI |
-| `10-deployment-guide.md` | Hướng dẫn triển khai |
-| `11-testing-strategy.md` | Chiến lược test |
-| `12-coding-convention.md` | Quy ước code |
-| `13-git-workflow.md` | Quy trình Git |
-| `14-sprint-report-template.md` | Mẫu báo cáo sprint |
-| `15-contribution-guide.md` | Hướng dẫn đóng góp (bản mở rộng) |
-| `16-authentication-jwt.md` | Đặc tả xác thực JWT và API guest login |
+- [Hướng dẫn demo đầy đủ](../README.md#chạy-demo-local-trên-windows).
+- [Chính sách RAG](src/main/resources/knowledge-base).
+- [HTTP request examples](http/README.md).
+- [Dockerfile MinIO và cách build](../deploy/minio/README.md).
