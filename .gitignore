@@ -6,3 +6,4 @@
 /deploy/vps/.env
 
 __pycache__/
+.vscode/
