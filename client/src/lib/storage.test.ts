@@ -56,3 +56,12 @@ describe('tokenStorage', () => {
     expect(tokenStorage.getRefreshToken()).toBe('refresh-token');
   });
 });
+
+it('updates cached roles when a refreshed JWT contains new permissions', () => {
+  authStorage.clearSession();
+  authStorage.setSession('old-token', ['RECEPTIONIST'], 3600, true, 'old-refresh');
+  const payload = btoa(JSON.stringify({ roles: ['HOUSEKEEPER', 'MANAGER'] }));
+  authStorage.updateTokens(`header.${payload}.signature`, 'new-refresh', 3600);
+  expect(authStorage.getSession()?.roles).toEqual(['HOUSEKEEPER', 'MANAGER']);
+  authStorage.clearSession();
+});

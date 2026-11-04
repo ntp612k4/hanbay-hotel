@@ -93,6 +93,8 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/api/v1/payments/sepay/webhook")
                         .permitAll()
+                        .requestMatchers("/api/v1/admin/**")
+                        .hasRole("ADMIN")
                         .anyRequest()
                         .authenticated())
                 .exceptionHandling(exceptions -> exceptions

@@ -3,6 +3,7 @@ import { USER_ROLES, type UserRole } from '../types/common';
 import { ROUTE_PATHS } from './routePaths';
 
 export const ROUTE_ROLES = {
+  accounts: [USER_ROLES.admin],
   management: [USER_ROLES.admin, USER_ROLES.manager],
   reception: [USER_ROLES.receptionist],
   housekeeping: [USER_ROLES.housekeeper],
@@ -12,6 +13,7 @@ export const ROUTE_ROLES = {
 } satisfies Record<string, UserRole[]>;
 
 const staffRoutes: Array<[string, UserRole[]]> = [
+  [ROUTE_PATHS.accounts, ROUTE_ROLES.accounts],
   ['/management/rooms', ROUTE_ROLES.management],
   ['/management/room-types', ROUTE_ROLES.management],
   [ROUTE_PATHS.dashboard, ROUTE_ROLES.management],

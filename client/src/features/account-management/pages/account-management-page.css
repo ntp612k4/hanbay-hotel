@@ -1,0 +1,22 @@
+.account-management-page {
+  width: 100%;
+}
+.account-management-toolbar {
+  margin-bottom: 20px;
+}
+.account-management-toolbar .ant-input-search {
+  width: min(100%, 360px);
+}
+.account-management-toolbar .ant-select {
+  min-width: 185px;
+}
+
+@media (max-width: 767px) {
+  .account-management-page h2 {
+    font-size: 24px;
+  }
+  .account-management-toolbar .ant-select {
+    width: 100%;
+    min-width: 0;
+  }
+}

@@ -44,6 +44,7 @@ public class User extends BaseEntity {
     private UserStatus status = UserStatus.ACTIVE;
 
     @Builder.Default
+    @org.hibernate.annotations.BatchSize(size = 50)
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "user_roles",

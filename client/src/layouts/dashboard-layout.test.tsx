@@ -141,3 +141,17 @@ describe('DashboardLayout role menu', () => {
     }
   });
 });
+
+describe('account administration menu', () => {
+  it('shows account management to admin', () => {
+    renderLayout([USER_ROLES.admin]);
+    expect(screen.getByText('Tài khoản và phân quyền')).toBeTruthy();
+  });
+  it.each([USER_ROLES.manager, USER_ROLES.receptionist, USER_ROLES.housekeeper])(
+    'hides account management from %s',
+    (role) => {
+      renderLayout([role]);
+      expect(screen.queryByText('Tài khoản và phân quyền')).toBeNull();
+    },
+  );
+});

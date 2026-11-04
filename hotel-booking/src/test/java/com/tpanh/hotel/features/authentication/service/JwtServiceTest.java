@@ -7,15 +7,18 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.tpanh.hotel.authentication.domain.entity.Role;
+import com.tpanh.hotel.authentication.domain.enums.UserStatus;
 import com.tpanh.hotel.authentication.service.AccessTokenRevocationService;
 import com.tpanh.hotel.authentication.service.impl.JwtService;
 import com.tpanh.hotel.common.config.JwtProperties;
 import com.tpanh.hotel.user.domain.User;
+import com.tpanh.hotel.user.repository.UserRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -23,8 +26,11 @@ import org.junit.jupiter.api.Test;
 class JwtServiceTest {
 
     private final AccessTokenRevocationService revocationService = revocationService();
+    private final UserRepository userRepository = mock(UserRepository.class);
     private final JwtService jwtService = new JwtService(
-            new JwtProperties("hotel-booking-system", "test-secret-123", 3600, 604800), revocationService);
+            new JwtProperties("hotel-booking-system", "test-secret-123", 3600, 604800),
+            revocationService,
+            userRepository);
 
     @Test
     void generatedTokenShouldContainUserIdAndRoles() {
@@ -32,6 +38,7 @@ class JwtServiceTest {
         user.setId(UUID.randomUUID());
         user.setRoles(Set.of(role("MANAGER"), role("HOUSEKEEPER")));
 
+        when(userRepository.findProfileById(user.getId())).thenReturn(Optional.of(user));
         String token = jwtService.generateAccessToken(user);
 
         assertThat(jwtService.validate(token)).get().satisfies(validatedJwt -> {
@@ -50,6 +57,7 @@ class JwtServiceTest {
         User user = new User();
         user.setId(UUID.randomUUID());
         user.setRoles(Set.of(role("MANAGER")));
+        when(userRepository.findProfileById(user.getId())).thenReturn(Optional.of(user));
         String token = jwtService.generateAccessToken(user);
         when(revocationService.isRevoked(user.getId().toString(), 0L)).thenReturn(true);
 
@@ -73,7 +81,9 @@ class JwtServiceTest {
     @Test
     void expiredTokenShouldBeRejected() {
         JwtService expiredTokenService = new JwtService(
-                new JwtProperties("hotel-booking-system", "test-secret-123", -1, 604800), revocationService);
+                new JwtProperties("hotel-booking-system", "test-secret-123", -1, 604800),
+                revocationService,
+                userRepository);
         User user = new User();
         user.setId(UUID.randomUUID());
         user.setRoles(Set.of(role("MANAGER")));
@@ -89,6 +99,7 @@ class JwtServiceTest {
         user.setId(UUID.randomUUID());
         user.setRoles(Set.of());
 
+        when(userRepository.findProfileById(user.getId())).thenReturn(Optional.of(user));
         String token = jwtService.generateAccessToken(user);
 
         assertThat(jwtService.validate(token))
@@ -107,6 +118,37 @@ class JwtServiceTest {
                 .signWith(Keys.hmacShaKeyFor(signingKey))
                 .compact();
 
+        assertThat(jwtService.validate(token)).isEmpty();
+    }
+
+    @Test
+    void lockedAccountCannotUseAnExistingToken() {
+        User user = User.builder()
+                .id(UUID.randomUUID())
+                .roles(Set.of(role("MANAGER")))
+                .build();
+        when(userRepository.findProfileById(user.getId())).thenReturn(Optional.of(user));
+        String token = jwtService.generateAccessToken(user);
+        user.setStatus(UserStatus.LOCKED);
+        assertThat(jwtService.validate(token)).isEmpty();
+    }
+
+    @Test
+    void changedRolesRejectOldClaimsEvenIfRedisVersionIsUnchanged() {
+        User user = User.builder()
+                .id(UUID.randomUUID())
+                .roles(Set.of(role("ADMIN")))
+                .build();
+        when(userRepository.findProfileById(user.getId())).thenReturn(Optional.of(user));
+        String token = jwtService.generateAccessToken(user);
+        user.setRoles(Set.of(role("RECEPTIONIST")));
+        assertThat(jwtService.validate(token)).isEmpty();
+    }
+
+    @Test
+    void deletedAccountCannotUseAnExistingToken() {
+        User user = User.builder().id(UUID.randomUUID()).build();
+        String token = jwtService.generateAccessToken(user);
         assertThat(jwtService.validate(token)).isEmpty();
     }
 

@@ -123,6 +123,23 @@ export const router = createBrowserRouter([
         children: [
           {
             element: (
+              <RoleRoute allowedRoles={ROUTE_ROLES.accounts}>
+                <Outlet />
+              </RoleRoute>
+            ),
+            children: [
+              {
+                path: ROUTE_PATHS.accounts,
+                lazy: async () => {
+                  const { AccountManagementPage } =
+                    await import('@features/account-management/pages/account-management-page');
+                  return { Component: AccountManagementPage };
+                },
+              },
+            ],
+          },
+          {
+            element: (
               <RoleRoute allowedRoles={ROUTE_ROLES.maintenance}>
                 <Outlet />
               </RoleRoute>

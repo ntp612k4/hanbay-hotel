@@ -1,4 +1,5 @@
 export const ROUTE_PATHS = {
+  accounts: '/admin/users',
   arrivals: '/front-desk/arrivals/today',
   departures: '/front-desk/departures/today',
   payments: '/payment-monitoring/payments',

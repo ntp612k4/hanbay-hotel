@@ -1,5 +1,7 @@
 import { userRoleSchema, type UserRole } from '../types/common';
 
+export const AUTH_SESSION_UPDATED_EVENT = 'auth-session-updated';
+
 const ACCESS_TOKEN_KEY = 'access_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
 const USER_ROLES_KEY = 'user_roles';
@@ -167,6 +169,17 @@ export const authStorage = {
 
     tokenStorage.setTokens(accessToken, refreshToken, remember);
     targetStorage?.setItem(EXPIRES_AT_KEY, String(Date.now() + expiresInSeconds * 1000));
+    try {
+      const payload = accessToken.split('.')[1];
+      const claims = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as {
+        roles?: unknown;
+      };
+      const roles = userRoleSchema.array().safeParse(claims.roles);
+      if (roles.success) targetStorage?.setItem(USER_ROLES_KEY, JSON.stringify(roles.data));
+    } catch {
+      /* A malformed payload must not replace the cached role list. */
+    }
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event(AUTH_SESSION_UPDATED_EVENT));
   },
 
   updateUser: (user: StoredAuthUser): void => {

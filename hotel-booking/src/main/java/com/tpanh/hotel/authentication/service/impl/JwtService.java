@@ -1,8 +1,10 @@
 package com.tpanh.hotel.authentication.service.impl;
 
+import com.tpanh.hotel.authentication.domain.enums.UserStatus;
 import com.tpanh.hotel.authentication.service.AccessTokenRevocationService;
 import com.tpanh.hotel.common.config.JwtProperties;
 import com.tpanh.hotel.user.domain.User;
+import com.tpanh.hotel.user.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -12,8 +14,11 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.crypto.SecretKey;
 import org.springframework.stereotype.Service;
 
@@ -26,9 +31,14 @@ public class JwtService {
     private final JwtProperties jwtProperties;
     private final AccessTokenRevocationService accessTokenRevocationService;
     private final SecretKey secretKey;
+    private final UserRepository userRepository;
 
-    public JwtService(JwtProperties jwtProperties, AccessTokenRevocationService accessTokenRevocationService) {
+    public JwtService(
+            JwtProperties jwtProperties,
+            AccessTokenRevocationService accessTokenRevocationService,
+            UserRepository userRepository) {
         this.jwtProperties = jwtProperties;
+        this.userRepository = userRepository;
         this.accessTokenRevocationService = accessTokenRevocationService;
         this.secretKey = Keys.hmacShaKeyFor(hash(jwtProperties.secret()));
     }
@@ -62,6 +72,18 @@ public class JwtService {
                     || !(tokenVersionClaim instanceof Number tokenVersion)
                     || claims.getSubject() == null
                     || accessTokenRevocationService.isRevoked(claims.getSubject(), tokenVersion.longValue())) {
+                return Optional.empty();
+            }
+            User user = userRepository
+                    .findProfileById(UUID.fromString(claims.getSubject()))
+                    .orElse(null);
+            if (user == null
+                    || user.getStatus() != UserStatus.ACTIVE
+                    || !user.getRoles().stream()
+                            .map(role -> role.getCode().name())
+                            .collect(Collectors.toSet())
+                            .equals(new HashSet<>(
+                                    roles.stream().map(String::valueOf).toList()))) {
                 return Optional.empty();
             }
             return Optional.of(new ValidatedJwt(

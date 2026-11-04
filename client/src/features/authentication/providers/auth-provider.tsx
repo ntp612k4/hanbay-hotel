@@ -2,7 +2,12 @@ import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } fro
 
 import { refreshAccessToken } from '../refresh-token';
 import { API_CLIENT_EVENTS } from '../../../lib/axios';
-import { authStorage, tokenStorage, type StoredAuthSession } from '../../../lib/storage';
+import {
+  AUTH_SESSION_UPDATED_EVENT,
+  authStorage,
+  tokenStorage,
+  type StoredAuthSession,
+} from '../../../lib/storage';
 import { AuthContext, type AuthContextValue } from './auth-context';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -21,6 +26,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     authStorage.updateUser(user);
     setSession((currentSession) => (currentSession ? { ...currentSession, user } : currentSession));
+  }, []);
+
+  useEffect(() => {
+    const sync = () => setSession(authStorage.getSession());
+    window.addEventListener(AUTH_SESSION_UPDATED_EVENT, sync);
+    window.addEventListener('storage', sync);
+    return () => {
+      window.removeEventListener(AUTH_SESSION_UPDATED_EVENT, sync);
+      window.removeEventListener('storage', sync);
+    };
   }, []);
 
   useEffect(() => {

@@ -45,6 +45,9 @@ export function DashboardLayout() {
   );
 
   const menuItems: MenuProps['items'] = [
+    ...(roles.includes(USER_ROLES.admin)
+      ? [{ key: ROUTE_PATHS.accounts, icon: <UserOutlined />, label: 'Tài khoản và phân quyền' }]
+      : []),
     ...(canViewManagerDashboard
       ? [{ key: '/dashboard', icon: <DashboardOutlined />, label: 'Tổng quan' }]
       : []),
