@@ -66,3 +66,28 @@
 .main-header__account-menu .ant-dropdown-menu-item + .ant-dropdown-menu-item-divider {
   margin: 6px 0;
 }
+
+.main-header__nav {
+  min-width: 0;
+}
+.main-header__account-button {
+  min-width: 0;
+  max-width: 240px;
+}
+.main-header__account-button .ant-typography {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 991px) {
+  .main-header__account-button .ant-typography {
+    max-width: 120px;
+  }
+}
+@media (max-width: 575px) {
+  .main-header .ant-btn {
+    min-width: 36px;
+    min-height: 36px;
+  }
+}

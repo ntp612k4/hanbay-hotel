@@ -7,7 +7,7 @@ import {
   PhoneOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { Alert, Button, Checkbox, Form, Input, Space, Typography } from 'antd';
+import { Alert, Button, Checkbox, Form, Input, Typography } from 'antd';
 import type { Rule } from 'antd/es/form';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -91,6 +91,7 @@ export function GuestRegisterForm() {
   return (
     <Form<GuestRegisterFormValues>
       form={form}
+      className="auth-register-form"
       layout="vertical"
       requiredMark={false}
       validateTrigger="onBlur"
@@ -106,14 +107,27 @@ export function GuestRegisterForm() {
       onValuesChange={clearServerFeedback}
     >
       {errorMessage && (
-        <Alert type="error" showIcon message={errorMessage} style={{ marginBottom: 16 }} />
+        <Alert
+          className="auth-register-form__wide"
+          type="error"
+          showIcon
+          message={errorMessage}
+          style={{ marginBottom: 16 }}
+        />
       )}
 
       {successMessage && (
-        <Alert type="success" showIcon message={successMessage} style={{ marginBottom: 16 }} />
+        <Alert
+          className="auth-register-form__wide"
+          type="success"
+          showIcon
+          message={successMessage}
+          style={{ marginBottom: 16 }}
+        />
       )}
 
       <Form.Item
+        className="auth-register-form__wide"
         label="Họ và tên"
         name="fullName"
         rules={[
@@ -145,7 +159,7 @@ export function GuestRegisterForm() {
           size="large"
           type="email"
           prefix={<MailOutlined />}
-          placeholder="name@aegean-suites.com"
+          placeholder="name@example.com"
           autoComplete="email"
           onPressEnter={submitOnEnter}
         />
@@ -224,6 +238,7 @@ export function GuestRegisterForm() {
       </Form.Item>
 
       <Form.Item
+        className="auth-register-form__wide"
         name="agreedTerms"
         valuePropName="checked"
         rules={[
@@ -248,6 +263,7 @@ export function GuestRegisterForm() {
       </Form.Item>
 
       <Button
+        className="auth-register-form__wide"
         id="reg-submit-btn"
         htmlType="submit"
         type="primary"
@@ -259,12 +275,12 @@ export function GuestRegisterForm() {
         Tạo tài khoản <ArrowRightOutlined />
       </Button>
 
-      <Space style={{ width: '100%', justifyContent: 'center', marginTop: 20 }}>
+      <div className="auth-register-form__wide auth-register-form__footer">
         <Typography.Text type="secondary">Đã có tài khoản?</Typography.Text>
         <Link to="/login" id="reg-signin-link">
           Đăng nhập
         </Link>
-      </Space>
+      </div>
     </Form>
   );
 }

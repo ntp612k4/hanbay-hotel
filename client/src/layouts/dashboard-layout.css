@@ -66,3 +66,103 @@
     display: none;
   }
 }
+
+.dashboard-shell__main,
+.dashboard-shell__page {
+  min-width: 0;
+}
+.dashboard-shell__main {
+  flex: 1;
+}
+.dashboard-shell__page > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.dashboard-shell__page .ant-space-vertical {
+  width: 100%;
+}
+.dashboard-shell__page .ant-space-vertical > .ant-space-item,
+.dashboard-shell__page .ant-card,
+.dashboard-shell__page .ant-card-body {
+  min-width: 0;
+}
+.dashboard-shell__page .ant-card-body {
+  padding: 20px;
+}
+.dashboard-shell__sider .ant-menu-title-content,
+.dashboard-shell__mobile-menu .ant-menu-title-content {
+  white-space: normal;
+  line-height: 1.4;
+}
+.dashboard-shell__sider .ant-menu-item,
+.dashboard-shell__sider .ant-menu-submenu-title,
+.dashboard-shell__mobile-menu .ant-menu-item,
+.dashboard-shell__mobile-menu .ant-menu-submenu-title {
+  min-height: 44px;
+  height: auto;
+  padding-block: 10px;
+}
+.dashboard-shell__sider.ant-layout-sider-collapsed .ant-menu-title-content {
+  white-space: nowrap;
+}
+.dashboard-shell__drawer-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #fff;
+  letter-spacing: 0.08em;
+}
+.dashboard-shell__mobile-menu .ant-drawer-content {
+  background: #001529;
+}
+.dashboard-shell__mobile-menu .ant-drawer-close {
+  color: #cbd5e1;
+}
+.dashboard-shell__account {
+  min-width: 0;
+  max-width: min(100%, 320px);
+}
+.dashboard-shell__user {
+  min-width: 0;
+  text-align: left;
+}
+.dashboard-shell__user .ant-typography {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dashboard-shell__header > .ant-space {
+  min-width: 0;
+}
+.dashboard-shell .ant-statistic-content {
+  overflow-wrap: anywhere;
+}
+.dashboard-shell .ant-card-head-title {
+  white-space: normal;
+}
+
+@media (max-width: 767px) {
+  .dashboard-shell__header {
+    padding-inline: 12px;
+  }
+  .dashboard-shell__content {
+    padding: 16px 12px 80px;
+  }
+  .dashboard-shell__page .ant-card-body {
+    padding: 16px;
+  }
+  .dashboard-shell__page .ant-card-head {
+    padding-inline: 16px;
+  }
+  .dashboard-shell__page h2.ant-typography {
+    font-size: 24px;
+    line-height: 1.35;
+  }
+  .dashboard-shell__page
+    > .ant-space-vertical
+    > .ant-space-item
+    > .ant-space:not(.ant-space-vertical) {
+    flex-wrap: wrap;
+  }
+}

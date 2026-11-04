@@ -1,6 +1,7 @@
+import { Grid } from 'antd';
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -11,6 +12,7 @@ import { DashboardLayout } from './dashboard-layout';
 vi.mock('../features/authentication/providers/auth-context', () => ({ useAuth: vi.fn() }));
 
 beforeEach(() => {
+  vi.spyOn(Grid, 'useBreakpoint').mockReturnValue({ md: true, lg: true });
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
     matches: false,
     media: query,
@@ -154,4 +156,18 @@ describe('account administration menu', () => {
       expect(screen.queryByText('Tài khoản và phân quyền')).toBeNull();
     },
   );
+});
+
+describe('mobile navigation', () => {
+  it('opens the navigation drawer without taking permanent page width', () => {
+    vi.mocked(Grid.useBreakpoint).mockReturnValue({ md: false, lg: false });
+    renderLayout([USER_ROLES.admin]);
+    expect(screen.queryByText('Tài khoản và phân quyền')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Mở menu' }));
+    expect(screen.getByText('Tài khoản và phân quyền')).toBeTruthy();
+    expect(screen.getByText('Khách trả phòng')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Mở menu' }).getAttribute('aria-expanded')).toBe(
+      'true',
+    );
+  });
 });

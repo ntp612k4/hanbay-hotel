@@ -1,3 +1,4 @@
+import { ResponsiveTable as Table } from '../../../components/data/responsive-table';
 import { PlusOutlined, ReloadOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -12,7 +13,6 @@ import {
   Modal,
   Select,
   Space,
-  Table,
   Tag,
   Typography,
 } from 'antd';

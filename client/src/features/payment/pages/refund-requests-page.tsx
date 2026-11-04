@@ -1,3 +1,4 @@
+import { ResponsiveTable as Table } from '../../../components/data/responsive-table';
 import {
   App,
   Alert,
@@ -10,7 +11,6 @@ import {
   Modal,
   Pagination,
   Space,
-  Table,
   Tag,
   Typography,
 } from 'antd';

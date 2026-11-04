@@ -1,3 +1,4 @@
+import { ResponsiveTable as Table } from '../../../components/data/responsive-table';
 import { EditOutlined, PlusOutlined, ReloadOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import type { TableProps } from 'antd';
 import {
@@ -11,7 +12,6 @@ import {
   Pagination,
   Select,
   Space,
-  Table,
   Tag,
   Typography,
   type FormInstance,

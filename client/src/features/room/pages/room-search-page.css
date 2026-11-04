@@ -188,7 +188,7 @@
 }
 
 .room-card-price-popover {
-  min-width: 280px;
+  min-width: min(280px, calc(100vw - 56px));
   padding: 2px;
 }
 

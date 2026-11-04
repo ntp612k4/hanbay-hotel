@@ -14,7 +14,18 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import { HomeOutlined, LoginOutlined } from '@ant-design/icons';
-import { Avatar, Button, Dropdown, Layout, Menu, Space, Typography, type MenuProps } from 'antd';
+import {
+  Avatar,
+  Button,
+  Dropdown,
+  Drawer,
+  Grid,
+  Layout,
+  Menu,
+  Space,
+  Typography,
+  type MenuProps,
+} from 'antd';
 import { useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
@@ -28,6 +39,9 @@ const { Text } = Typography;
 
 export function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const screens = Grid.useBreakpoint();
+  const mobile = screens.md === false;
   const { logout, roles, session } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -143,37 +157,71 @@ export function DashboardLayout() {
 
   return (
     <Layout className="dashboard-shell">
-      <Sider
-        breakpoint="lg"
-        collapsedWidth={72}
-        collapsible
-        collapsed={collapsed}
-        trigger={null}
-        onBreakpoint={setCollapsed}
-        theme="dark"
-        className="dashboard-shell__sider"
+      {!mobile && (
+        <Sider
+          width={248}
+          breakpoint="lg"
+          collapsedWidth={72}
+          collapsible
+          collapsed={collapsed}
+          trigger={null}
+          onBreakpoint={setCollapsed}
+          theme="dark"
+          className="dashboard-shell__sider"
+        >
+          <div className="dashboard-shell__brand">
+            <BankOutlined />
+            {!collapsed && <span>HANBAY</span>}
+          </div>
+          <Menu
+            theme="dark"
+            mode="inline"
+            items={menuItems}
+            selectedKeys={[location.pathname]}
+            defaultOpenKeys={canMonitorPayments ? ['payment-monitoring'] : []}
+            onClick={({ key }) => {
+              if (key.startsWith('/')) navigate(key);
+            }}
+          />
+        </Sider>
+      )}
+
+      <Drawer
+        title={
+          <span className="dashboard-shell__drawer-brand">
+            <BankOutlined /> HANBAY
+          </span>
+        }
+        placement="left"
+        open={mobile && mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        size={280}
+        className="dashboard-shell__mobile-menu"
+        styles={{ body: { padding: 0 }, header: { borderBottomColor: '#1e293b' } }}
       >
-        <div className="dashboard-shell__brand">
-          <BankOutlined />
-          {!collapsed && <span>HANBAY</span>}
-        </div>
         <Menu
           theme="dark"
           mode="inline"
           items={menuItems}
           selectedKeys={[location.pathname]}
           defaultOpenKeys={canMonitorPayments ? ['payment-monitoring'] : []}
-          onClick={({ key }) => key.startsWith('/') && navigate(key)}
+          onClick={({ key }) => {
+            if (key.startsWith('/')) navigate(key);
+            setMobileOpen(false);
+          }}
         />
-      </Sider>
+      </Drawer>
 
-      <Layout>
+      <Layout className="dashboard-shell__main">
         <Header className="dashboard-shell__header">
           <Button
             type="text"
-            aria-label={collapsed ? 'Mở menu' : 'Thu gọn menu'}
+            aria-label={mobile || collapsed ? 'Mở menu' : 'Thu gọn menu'}
+            aria-expanded={mobile ? mobileOpen : !collapsed}
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            onClick={() => setCollapsed((value) => !value)}
+            onClick={() =>
+              mobile ? setMobileOpen((value) => !value) : setCollapsed((value) => !value)
+            }
           />
           <Space size="middle">
             <Button type="text" aria-label="Thông báo" icon={<NotificationOutlined />} />

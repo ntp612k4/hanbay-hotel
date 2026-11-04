@@ -1,0 +1,112 @@
+.auth-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(440px, 1fr);
+  min-height: 100dvh;
+  background: #f5f7fa;
+}
+
+.auth-page__visual {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  background-position: center;
+  background-size: cover;
+}
+
+.auth-page__panel {
+  display: flex;
+  min-width: 0;
+  min-height: 100dvh;
+  padding: clamp(20px, 3vw, 40px);
+}
+
+.auth-page__card {
+  container-type: inline-size;
+  width: 100%;
+  max-width: 560px;
+  margin: auto;
+  border-color: #e2e8f0;
+  box-shadow: 0 8px 32px rgb(15 23 42 / 5%);
+}
+
+.auth-page__card .ant-card-body {
+  padding: clamp(20px, 2.5vw, 32px);
+}
+.auth-page__intro {
+  margin-bottom: 20px;
+  text-align: center;
+}
+.auth-page__intro h2.ant-typography {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.3;
+}
+.auth-page__card .ant-form-item {
+  margin-bottom: 16px;
+}
+.auth-page__card .ant-form-item-label {
+  padding-bottom: 6px;
+}
+.auth-page__card .ant-input-affix-wrapper-lg,
+.auth-page__card .ant-input-lg {
+  min-height: 44px;
+}
+.auth-page__card .ant-form-item-extra {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.auth-register-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: 16px;
+}
+.auth-register-form > * {
+  min-width: 0;
+}
+.auth-register-form__wide {
+  grid-column: 1 / -1;
+}
+.auth-register-form__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 10px;
+  margin-top: 18px;
+  text-align: center;
+}
+.auth-register-form .ant-checkbox-wrapper {
+  align-items: flex-start;
+  line-height: 1.6;
+}
+.auth-register-form .ant-checkbox {
+  margin-top: 3px;
+}
+
+@container (min-width: 430px) {
+  .auth-register-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1023px) {
+  .auth-page {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .auth-page__visual {
+    display: none;
+  }
+}
+
+@media (max-width: 575px) {
+  .auth-page__panel {
+    padding: 16px;
+  }
+  .auth-page__card .ant-card-body {
+    padding: 20px;
+  }
+  .auth-page__intro h2.ant-typography {
+    font-size: 24px;
+  }
+}

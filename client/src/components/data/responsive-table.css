@@ -1,0 +1,50 @@
+.responsive-table {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.responsive-table .ant-table-wrapper,
+.responsive-table .ant-spin-nested-loading,
+.responsive-table .ant-spin-container {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.responsive-table .ant-table-content,
+.responsive-table .ant-table-body {
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.responsive-table .ant-table-cell {
+  overflow-wrap: anywhere;
+}
+
+.responsive-table .ant-table-cell .ant-space {
+  max-width: 100%;
+}
+
+.responsive-table .ant-table-pagination {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+
+.responsive-table__hint {
+  margin: 10px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 575px) {
+  .responsive-table .ant-table-pagination {
+    justify-content: center;
+  }
+  .responsive-table .ant-pagination-total-text {
+    flex-basis: 100%;
+    height: auto;
+    margin-inline-end: 0;
+    text-align: center;
+  }
+}

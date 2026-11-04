@@ -69,7 +69,7 @@ export function RoomDetailPage() {
             </Typography.Paragraph>
           </div>
           <RoomGallery images={roomType.images} roomName={roomType.name} />
-          <Row gutter={[32, 32]} align="top">
+          <Row gutter={[{ xs: 16, md: 24, lg: 32 }, 32]} align="top">
             <Col xs={24} lg={16}>
               <RoomInfo roomType={roomType} />
             </Col>

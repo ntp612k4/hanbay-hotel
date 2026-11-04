@@ -200,3 +200,68 @@ p {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Keep form overlays inside the viewport; scroll long forms above their actions. */
+.ant-modal .ant-descriptions-item-content {
+  overflow-wrap: anywhere;
+}
+.ant-modal .ant-modal-body {
+  max-height: calc(100dvh - 190px);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+}
+
+@media (max-width: 575px) {
+  .ant-modal {
+    top: 16px;
+    padding-bottom: 16px;
+  }
+  .ant-modal-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .ant-modal-footer > .ant-btn + .ant-btn {
+    margin-inline-start: 0;
+  }
+
+  /* Mobile calendars use a bounded bottom sheet with vertically stacked months. */
+  .ant-picker-dropdown {
+    position: fixed !important;
+    top: auto !important;
+    left: 8px !important;
+    right: 8px !important;
+    bottom: 16px !important;
+    width: calc(100vw - 16px);
+    max-width: calc(100vw - 16px);
+    transform: none !important;
+  }
+  .ant-picker-dropdown .ant-picker-range-arrow {
+    display: none;
+  }
+  .ant-picker-dropdown .ant-picker-panels {
+    flex-direction: column;
+  }
+  .ant-picker-dropdown .ant-picker-panel-container,
+  .ant-picker-dropdown .ant-picker-panel,
+  .ant-picker-dropdown .ant-picker-date-panel {
+    width: 100%;
+    max-width: 100%;
+  }
+  .ant-picker-dropdown .ant-picker-panel-layout {
+    max-height: min(560px, calc(100dvh - 80px));
+    overflow-y: auto;
+  }
+  .ant-picker-dropdown .ant-picker-body {
+    padding: 8px;
+  }
+  .ant-picker-dropdown .ant-picker-content {
+    width: 100%;
+    table-layout: fixed;
+  }
+  .ant-picker-dropdown .ant-picker-header {
+    padding-inline: 8px;
+  }
+}

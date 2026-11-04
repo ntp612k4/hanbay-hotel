@@ -1,4 +1,5 @@
-import { Alert, App, Button, DatePicker, Form, Input, Modal, Space, Table, Tag } from 'antd';
+import { ResponsiveTable as Table } from '../../../components/data/responsive-table';
+import { Alert, App, Button, DatePicker, Form, Input, Modal, Space, Tag } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useState } from 'react';
 import type { HolidayCalendarItem } from '../api/holiday-calendar-api';

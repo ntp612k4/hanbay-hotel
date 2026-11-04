@@ -127,3 +127,95 @@
     align-self: flex-start;
   }
 }
+
+.today-departures-page__booking-code code {
+  margin-inline: 0;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.today-departures-page__stay {
+  white-space: nowrap;
+}
+.today-departures-page__payment {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  font-size: 13px;
+}
+.today-departures-page__payment > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+.today-departures-page__payment dt {
+  color: #64748b;
+}
+.today-departures-page__payment dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.today-departures-page__payment .ant-tag {
+  margin-inline-end: 0;
+}
+.today-departures-page__mobile-records {
+  display: grid;
+  gap: 16px;
+}
+.today-departures-page__mobile-record {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #dbe3ec;
+  border-radius: 8px;
+}
+.today-departures-page__record-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: 10px;
+}
+.today-departures-page__record-heading > .ant-space {
+  flex: 1;
+  min-width: 160px;
+}
+.today-departures-page__record-stay {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.today-departures-page__mobile-record > .ant-space {
+  align-items: stretch;
+}
+.today-departures-page__mobile-record > .ant-space .ant-btn {
+  width: 100%;
+}
+.today-departures-page__mobile-record .today-departures-page__payment {
+  padding-block: 12px;
+  border-block: 1px solid #edf2f7;
+}
+.today-departures-page__pagination {
+  margin-top: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+@media (max-width: 575px) {
+  .today-departures-page__mobile-record {
+    padding: 12px;
+  }
+  .today-departures-page__record-stay {
+    grid-template-columns: 1fr;
+  }
+  .today-departures-page__pagination .ant-pagination-total-text {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+.today-departures-page__checkout-modal .ant-descriptions-item-label {
+  width: 48%;
+}
+.today-departures-page__checkout-modal .ant-descriptions-item-content {
+  white-space: nowrap;
+}

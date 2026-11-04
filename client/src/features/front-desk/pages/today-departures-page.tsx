@@ -1,3 +1,4 @@
+import { ResponsiveTable as Table } from '../../../components/data/responsive-table';
 import {
   CalendarOutlined,
   CheckCircleOutlined,
@@ -16,13 +17,15 @@ import {
   DatePicker,
   Descriptions,
   Form,
+  Grid,
+  Pagination,
+  Spin,
   Input,
   InputNumber,
   Modal,
   Row,
   Space,
   Statistic,
-  Table,
   Tag,
   Typography,
   type TableColumnsType,
@@ -67,6 +70,8 @@ interface CheckOutFormValues {
 
 export function TodayDeparturesPage() {
   const { message } = App.useApp();
+  const screens = Grid.useBreakpoint();
+  const mobile = screens.md === false;
   const [form] = Form.useForm<CheckOutFormValues>();
   const [page, setPage] = useState(0);
   const [selectedSnapshot, setSelectedDeparture] = useState<TodayDeparture | null>(null);
@@ -228,141 +233,140 @@ export function TodayDeparturesPage() {
     );
   };
 
+  const renderGuest = (departure: TodayDeparture) => (
+    <Space className="today-departures-page__cell-stack" orientation="vertical" size={3}>
+      <Text strong>{departure.guestName}</Text>
+      <Text code className="today-departures-page__booking-code">
+        {departure.bookingCode}
+      </Text>
+      <Text type="secondary">
+        <PhoneOutlined /> {departure.guestPhone ?? 'Chưa cập nhật số điện thoại'}
+      </Text>
+    </Space>
+  );
+  const renderRoom = (departure: TodayDeparture) => (
+    <Space className="today-departures-page__cell-stack" orientation="vertical" size={4}>
+      <Text>{departure.roomTypeName}</Text>
+      <Text type="secondary">
+        <TeamOutlined /> {departure.adults} người lớn
+        {departure.children > 0 ? ` · ${departure.children} trẻ em` : ''}
+      </Text>
+    </Space>
+  );
+  const renderStay = (departure: TodayDeparture) => (
+    <Space
+      className="today-departures-page__cell-stack today-departures-page__stay"
+      orientation="vertical"
+      size={4}
+    >
+      <Text>Nhận: {formatDate(departure.checkInDate)}</Text>
+      <Text type="secondary">Trả: {formatDate(departure.checkOutDate)}</Text>
+    </Space>
+  );
+  const renderStatus = (departure: TodayDeparture) =>
+    dayjs(departure.checkOutDate).isBefore(todayAtHotel, 'day') ? (
+      <Tag color="error">Quá hạn trả phòng</Tag>
+    ) : (
+      <Tag color="processing">Đang lưu trú</Tag>
+    );
+  const renderPayment = (departure: TodayDeparture) => (
+    <dl className="today-departures-page__payment">
+      <div>
+        <dt>Tổng tiền</dt>
+        <dd>{money.format(departure.totalAmount)}</dd>
+      </div>
+      <div>
+        <dt>Đã thanh toán</dt>
+        <dd>
+          <Text type="success">{money.format(departure.paidAmount)}</Text>
+        </dd>
+      </div>
+      <div>
+        <dt>Còn phải thu</dt>
+        <dd>
+          {departure.outstandingAmount > 0 ? (
+            <Text strong type="danger">
+              {money.format(departure.outstandingAmount)}
+            </Text>
+          ) : (
+            <Tag color="success">Đã đủ</Tag>
+          )}
+        </dd>
+      </div>
+    </dl>
+  );
+  const renderAction = (departure: TodayDeparture) => (
+    <Space orientation="vertical" size={4} align="end">
+      <Button
+        type="primary"
+        icon={<CheckCircleOutlined />}
+        disabled={submitting}
+        loading={checkOutMutation.isPending && selectedDeparture?.bookingId === departure.bookingId}
+        onClick={() => {
+          setSelectedDeparture(departure);
+          if (todayAtHotel.isBefore(dayjs(departure.checkOutDate), 'day'))
+            setEarlyDate(todayAtHotel.format('YYYY-MM-DD'));
+          form.resetFields();
+          form.setFieldsValue({
+            additionalChargeAmount: 0,
+            collectedAmount: 0,
+          });
+          checkOutMutation.reset();
+        }}
+      >
+        {todayAtHotel.isBefore(dayjs(departure.checkOutDate), 'day')
+          ? 'Trả phòng sớm'
+          : 'Trả phòng'}
+      </Button>
+      {departure.outstandingAmount > 0 && (
+        <Text type="secondary" className="today-departures-page__action-note">
+          Cần thu thêm
+        </Text>
+      )}
+    </Space>
+  );
   const columns: TableColumnsType<TodayDeparture> = [
     {
-      title: 'Mã đặt phòng',
-      dataIndex: 'bookingCode',
-      fixed: 'left',
-      width: 150,
-      render: (value: string) => <Text code>{value}</Text>,
-    },
-    {
-      title: 'Khách chính',
+      title: 'Khách / đặt phòng',
       key: 'guest',
-      width: 190,
-      render: (_, departure) => (
-        <Space className="today-departures-page__cell-stack" orientation="vertical" size={2}>
-          <Text strong>{departure.guestName}</Text>
-          <Text type="secondary">
-            <PhoneOutlined /> {departure.guestPhone ?? 'Chưa cập nhật số điện thoại'}
-          </Text>
-        </Space>
-      ),
+      width: 200,
+      render: (_, departure) => renderGuest(departure),
     },
     {
-      title: 'Hạng phòng',
-      dataIndex: 'roomTypeName',
-      width: 170,
-      render: (value: string) => <Text>{value}</Text>,
+      title: 'Hạng phòng / khách',
+      key: 'room',
+      width: 145,
+      render: (_, departure) => renderRoom(departure),
     },
-    {
-      title: 'Lưu trú',
-      key: 'stay',
-      width: 170,
-      render: (_, departure) => (
-        <Space className="today-departures-page__cell-stack" orientation="vertical" size={2}>
-          <Text>{formatDate(departure.checkInDate)}</Text>
-          <Text type="secondary">Trả phòng: {formatDate(departure.checkOutDate)}</Text>
-        </Space>
-      ),
-    },
-    {
-      title: 'Số khách',
-      key: 'guests',
-      width: 150,
-      render: (_, departure) => (
-        <div className="today-departures-page__guest-count">
-          <span>
-            <TeamOutlined /> {departure.adults} người lớn
-          </span>
-          {departure.children > 0 && (
-            <span className="today-departures-page__guest-count-children">
-              {departure.children} trẻ em
-            </span>
-          )}
-        </div>
-      ),
-    },
+    { title: 'Lưu trú', key: 'stay', width: 145, render: (_, departure) => renderStay(departure) },
     {
       title: 'Trạng thái',
       key: 'status',
-      width: 145,
-      render: (_, departure) =>
-        dayjs(departure.checkOutDate).isBefore(todayAtHotel, 'day') ? (
-          <Tag color="error">Quá hạn trả phòng</Tag>
-        ) : (
-          <Tag color="processing">Đang lưu trú</Tag>
-        ),
+      width: 140,
+      render: (_, departure) => renderStatus(departure),
     },
     {
-      title: 'Tổng tiền',
-      dataIndex: 'totalAmount',
-      align: 'right',
-      width: 145,
-      className: 'today-departures-page__money-cell',
-      render: (value: number) => money.format(value),
-    },
-    {
-      title: 'Đã thanh toán',
-      dataIndex: 'paidAmount',
-      align: 'right',
-      width: 155,
-      className: 'today-departures-page__money-cell',
-      render: (value: number) => <Text type="success">{money.format(value)}</Text>,
-    },
-    {
-      title: 'Còn phải thu',
-      dataIndex: 'outstandingAmount',
-      align: 'right',
-      width: 165,
-      className: 'today-departures-page__money-cell',
-      render: (value: number) =>
-        value > 0 ? (
-          <Text type="danger">{money.format(value)}</Text>
-        ) : (
-          <Tag color="success">Đã đủ</Tag>
-        ),
+      title: 'Thanh toán',
+      key: 'payment',
+      width: 230,
+      render: (_, departure) => renderPayment(departure),
     },
     {
       title: 'Thao tác',
       key: 'actions',
-      align: 'right',
-      fixed: 'right',
       width: 155,
-      render: (_, departure) => (
-        <Space orientation="vertical" size={4} align="end">
-          <Button
-            type="primary"
-            icon={<CheckCircleOutlined />}
-            disabled={submitting}
-            loading={
-              checkOutMutation.isPending && selectedDeparture?.bookingId === departure.bookingId
-            }
-            onClick={() => {
-              setSelectedDeparture(departure);
-              if (todayAtHotel.isBefore(dayjs(departure.checkOutDate), 'day'))
-                setEarlyDate(todayAtHotel.format('YYYY-MM-DD'));
-              form.resetFields();
-              form.setFieldsValue({
-                additionalChargeAmount: 0,
-                collectedAmount: 0,
-              });
-              checkOutMutation.reset();
-            }}
-          >
-            {todayAtHotel.isBefore(dayjs(departure.checkOutDate), 'day')
-              ? 'Trả phòng sớm'
-              : 'Trả phòng'}
-          </Button>
-          {departure.outstandingAmount > 0 && (
-            <Text type="secondary" className="today-departures-page__action-note">
-              Cần thu thêm
-            </Text>
-          )}
-        </Space>
-      ),
+      align: 'right',
+      render: (_, departure) => renderAction(departure),
     },
   ];
+  const pagination = {
+    current: page + 1,
+    pageSize: PAGE_SIZE,
+    total: departuresQuery.data?.totalElements ?? 0,
+    showSizeChanger: false,
+    showTotal: (total: number) => `Tổng ${total} lượt đặt phòng`,
+    onChange: (nextPage: number) => setPage(nextPage - 1),
+  };
 
   return (
     <div className="today-departures-page">
@@ -431,30 +435,55 @@ export function TodayDeparturesPage() {
 
       {(!departuresQuery.isError || departuresQuery.data !== undefined) && (
         <Card className="today-departures-page__table-card" title="Danh sách khách đang lưu trú">
-          <Table<TodayDeparture>
-            childrenColumnName="nestedRows"
-            columns={columns}
-            dataSource={departures}
-            loading={departuresQuery.isLoading || departuresQuery.isFetching}
-            rowKey="bookingId"
-            locale={{
-              emptyText: (
-                <Empty
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description="Hiện chưa có khách đang lưu trú"
-                />
-              ),
-            }}
-            pagination={{
-              current: page + 1,
-              pageSize: PAGE_SIZE,
-              total: departuresQuery.data?.totalElements ?? 0,
-              showSizeChanger: false,
-              showTotal: (total) => `Tổng ${total} lượt đặt phòng`,
-              onChange: (nextPage) => setPage(nextPage - 1),
-            }}
-            scroll={{ x: 1440 }}
-          />
+          {mobile ? (
+            <Spin spinning={departuresQuery.isLoading || departuresQuery.isFetching}>
+              <div className="today-departures-page__mobile-records">
+                {departures.map((departure) => (
+                  <article
+                    key={departure.bookingId}
+                    className="today-departures-page__mobile-record"
+                  >
+                    <div className="today-departures-page__record-heading">
+                      {renderGuest(departure)}
+                      {renderStatus(departure)}
+                    </div>
+                    <div className="today-departures-page__record-stay">
+                      {renderRoom(departure)}
+                      {renderStay(departure)}
+                    </div>
+                    {renderPayment(departure)}
+                    {renderAction(departure)}
+                  </article>
+                ))}
+                {!departures.length && !departuresQuery.isLoading && (
+                  <Empty description="Hiện chưa có khách đang lưu trú" />
+                )}
+              </div>
+              <Pagination
+                {...pagination}
+                responsive
+                className="today-departures-page__pagination"
+              />
+            </Spin>
+          ) : (
+            <Table<TodayDeparture>
+              childrenColumnName="nestedRows"
+              columns={columns}
+              dataSource={departures}
+              loading={departuresQuery.isLoading || departuresQuery.isFetching}
+              rowKey="bookingId"
+              locale={{
+                emptyText: (
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description="Hiện chưa có khách đang lưu trú"
+                  />
+                ),
+              }}
+              pagination={pagination}
+              scroll={{ x: 1015 }}
+            />
+          )}
         </Card>
       )}
 

@@ -1,5 +1,6 @@
 import {
   LoginOutlined,
+  MenuOutlined,
   LogoutOutlined,
   UserOutlined,
   DashboardOutlined,
@@ -40,7 +41,7 @@ export function MainHeader() {
       <Flex
         align="center"
         justify="space-between"
-        gap={token.marginLG}
+        gap={screens.md ? token.marginLG : token.marginSM}
         style={{ width: '100%', maxWidth: 1440, height: '100%', marginInline: 'auto' }}
       >
         <Link to="/" aria-label="HANBAY Hotel - Trang chủ">
@@ -75,6 +76,22 @@ export function MainHeader() {
               ))}
             </Flex>
           </nav>
+        )}
+
+        {!screens.md && (
+          <Dropdown
+            trigger={['click']}
+            menu={{
+              items: [
+                { key: '/', label: 'Tổng quan' },
+                { key: '/rooms/search', label: 'Đặt phòng' },
+                { key: '/room-types', label: 'Hạng phòng' },
+              ],
+              onClick: ({ key }) => navigate(key),
+            }}
+          >
+            <Button type="text" icon={<MenuOutlined />} aria-label="Mở điều hướng chính" />
+          </Dropdown>
         )}
 
         {isAuthenticated ? (
@@ -207,14 +224,20 @@ export function MainHeader() {
           <Flex gap="small">
             {latestPaymentId && (
               <Button
+                aria-label="Tiếp tục thanh toán"
                 icon={<CreditCardOutlined />}
                 onClick={() => navigate(`/payments/${latestPaymentId}/result`)}
               >
-                {screens.md ? 'Tiếp tục thanh toán' : 'Thanh toán'}
+                {screens.md ? 'Tiếp tục thanh toán' : screens.sm ? 'Thanh toán' : null}
               </Button>
             )}
-            <Button type="primary" icon={<LoginOutlined />}>
-              <Link to="/login">Đăng nhập</Link>
+            <Button
+              type="primary"
+              icon={<LoginOutlined />}
+              aria-label="Đăng nhập"
+              onClick={() => navigate('/login')}
+            >
+              {screens.sm ? 'Đăng nhập' : null}
             </Button>
           </Flex>
         )}

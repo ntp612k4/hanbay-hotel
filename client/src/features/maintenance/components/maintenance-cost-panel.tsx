@@ -1,3 +1,4 @@
+import { ResponsiveTable as Table } from '../../../components/data/responsive-table';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -11,7 +12,6 @@ import {
   InputNumber,
   Modal,
   Space,
-  Table,
 } from 'antd';
 import dayjs from 'dayjs';
 import { apiClient } from '../../../lib/axios';

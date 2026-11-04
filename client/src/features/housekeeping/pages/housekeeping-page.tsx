@@ -1,3 +1,4 @@
+import { ResponsiveTable as Table } from '../../../components/data/responsive-table';
 import {
   ApartmentOutlined,
   ClearOutlined,
@@ -14,7 +15,6 @@ import {
   Row,
   Space,
   Statistic,
-  Table,
   Tag,
   Typography,
   type TableColumnsType,

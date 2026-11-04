@@ -51,7 +51,7 @@ export function GuestInformationPage(props: GuestInformationPageProps) {
       <Typography.Text strong style={{ display: 'block', marginBottom: 28 }}>
         Thông tin khách hàng
       </Typography.Text>
-      <Row gutter={[40, 32]}>
+      <Row gutter={[{ xs: 16, sm: 24, xl: 40 }, 32]}>
         <Col xs={24} xl={16}>
           <Card
             style={{ marginBottom: 30, borderColor: token.colorBorder }}

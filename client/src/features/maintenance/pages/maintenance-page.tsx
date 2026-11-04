@@ -1,3 +1,4 @@
+import { ResponsiveTable as Table } from '../../../components/data/responsive-table';
 import { MaintenanceCostPanel } from '../components/maintenance-cost-panel';
 import { PlusOutlined } from '@ant-design/icons';
 import {
@@ -15,7 +16,6 @@ import {
   Select,
   Space,
   Spin,
-  Table,
   Tag,
   Typography,
   type TableColumnsType,

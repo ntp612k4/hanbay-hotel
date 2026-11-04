@@ -1,15 +1,6 @@
+import { ResponsiveTable as Table } from '../../../components/data/responsive-table';
 import { ReloadOutlined, TeamOutlined, WarningOutlined } from '@ant-design/icons';
-import {
-  Alert,
-  Button,
-  Card,
-  Empty,
-  Space,
-  Table,
-  Tag,
-  Typography,
-  type TableColumnsType,
-} from 'antd';
+import { Alert, Button, Card, Empty, Space, Tag, Typography, type TableColumnsType } from 'antd';
 import dayjs from 'dayjs';
 import { useState } from 'react';
 
